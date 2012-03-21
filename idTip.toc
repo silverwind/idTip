@@ -1,4 +1,4 @@
-## Interface: 40200
+## Interface: 40300
 ## Title: idTip
 ## Version: 2.0
 ## Notes: Adds SpellIDs and ItemIDs to the various tooltips ingame
