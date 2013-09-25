@@ -7,20 +7,20 @@ local types = {
     unit  = "NPC ID"
 }
 
-local function addLine(self,id,type)
-    self:AddDoubleLine(type..":","|cffffffff"..id)
+local function addLine(self, id, type)
+    self:AddDoubleLine(type .. ":", "|cffffffff" .. id)
     self:Show()
 end
 
 -- Spells
-hooksecurefunc(GameTooltip, "SetUnitBuff", function(self,...)
-    local id = select(11,UnitBuff(...))
+hooksecurefunc(GameTooltip, "SetUnitBuff", function(self, ...)
+    local id = select(11, UnitBuff(...))
     if id then addLine(self, id, types.spell) end
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self,...)
-    local id = select(11,UnitDebuff(...))
-    if id then addLine(self,id, types.spell) end
+    local id = select(11, UnitDebuff(...))
+    if id then addLine(self, id, types.spell) end
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
@@ -29,7 +29,7 @@ hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
 end)
 
 GameTooltip:HookScript("OnTooltipSetSpell", function(self)
-    local id = select(3,self:GetSpell())
+    local id = select(3, self:GetSpell())
     if id then addLine(self, id, types.spell) end
 end)
 
@@ -52,10 +52,11 @@ hooksecurefunc("SetItemRef", function(link, ...)
 end)
 
 local function attachItemTooltip(self)
-    local link = select(2,self:GetItem())
-    if not link then return end
-    local id = select(3,strfind(link, "^|%x+|Hitem:(%-?%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(%-?%d+):(%-?%d+)"))
-    if id then addLine(self, id, types.item) end
+    local link = select(2, self:GetItem())
+    if link then
+        local id = select(3, strfind(link, "^|%x+|Hitem:(%-?%d+):(%d+):(%d+).*"))
+        if id then addLine(self, id, types.item) end
+    end
 end
 
 GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
