@@ -7,9 +7,9 @@ local types = {
     unit  = "NPC ID"
 }
 
-local function addLine(self, id, type)
-    self:AddDoubleLine(type .. ":", "|cffffffff" .. id)
-    self:Show()
+local function addLine(tooltip, id, type)
+    tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
+    tooltip:Show()
 end
 
 -- Spells
