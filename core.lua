@@ -37,7 +37,7 @@ end)
 local f = CreateFrame("frame")
 f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
 f:SetScript("OnEvent", function()
-    if GameTooltip:IsVisible() and not UnitIsPlayer("mouseover") then
+    if GameTooltip:IsVisible() and not UnitIsPlayer("mouseover") and not C_PetBattles.IsInBattle() then
         local id = tonumber(UnitGUID("mouseover"):sub(6, 10), 16)
         if id ~= 0 then
             addLine(GameTooltip, id, types.unit);
