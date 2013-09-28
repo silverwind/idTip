@@ -1,9 +1,10 @@
-local select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, tonumber, strfind, hooksecurefunc =
-    select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, tonumber, strfind, hooksecurefunc
+local select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, hooksecurefunc =
+    select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, hooksecurefunc
 
 local types = {
     spell = "SpellID",
     item  = "ItemID",
+    glyph = "GlyphID",
     unit  = "NPC ID"
 }
 
@@ -24,7 +25,7 @@ hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self,...)
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
-    local id = select(11,UnitAura(...))
+    local id = select(11, UnitAura(...))
     if id then addLine(self, id, types.spell) end
 end)
 
@@ -67,3 +68,13 @@ ItemRefShoppingTooltip3:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip3:HookScript("OnTooltipSetItem", attachItemTooltip)
+
+-- Glyphs
+hooksecurefunc(GameTooltip, "SetGlyph", function(self, ...)
+    local id = select(4, GetGlyphSocketInfo(...))
+    if id then addLine(self, id, types.glyph) end
+end)
+
+hooksecurefunc(GameTooltip, "SetGlyphByID", function(self, id)
+    if id then addLine(self, id, types.glyph) end
+end)
