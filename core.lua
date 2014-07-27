@@ -35,12 +35,11 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
 end)
 
 -- Units
-local f = CreateFrame("frame")
-f:RegisterEvent("UPDATE_MOUSEOVER_UNIT")
-f:SetScript("OnEvent", function()
-    if GameTooltip:IsVisible() and not UnitIsPlayer("mouseover") and not C_PetBattles.IsInBattle() then
-        local id = tonumber(UnitGUID("mouseover"):sub(6, 10), 16)
-        if id ~= 0 then
+GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+    local name, unit = self:GetUnit()
+    if unit then
+        local id = tonumber(string.sub(UnitGUID(unit) or "", 6, 10), 16)
+        if id then
             addLine(GameTooltip, id, types.unit);
         end
     end
