@@ -1,6 +1,6 @@
 #idTip
 
-Adds SpellIDs, ItemIDs and NPC IDs to the various ingame tooltip windows.
+Adds SpellIDs, ItemIDs, GlyphIDs and NPC IDs to the various ingame tooltip windows.
 
 ![Screenshot](http://i.imgur.com/EENBCzt.jpg)
 
