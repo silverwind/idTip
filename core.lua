@@ -1,5 +1,7 @@
-local select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, hooksecurefunc =
-    select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, hooksecurefunc
+local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch =
+      hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch
+
+local wod = select(4, GetBuildInfo()) < 60000
 
 local types = {
     spell = "SpellID",
@@ -38,7 +40,7 @@ end)
 GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     local name, unit = self:GetUnit()
     if unit then
-        local id = tonumber(string.sub(UnitGUID(unit) or "", 6, 10), 16)
+        local id = wod and strmatch(UnitGUID(unit) or "", ":(%d+):%x+$") or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
         if id then
             addLine(GameTooltip, id, types.unit);
         end
