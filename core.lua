@@ -1,7 +1,7 @@
 local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch =
       hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch
 
-local wod = select(4, GetBuildInfo()) < 60000
+local wod = select(4, GetBuildInfo()) >= 60000
 
 local types = {
     spell = "SpellID",
@@ -65,10 +65,8 @@ GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
-ItemRefShoppingTooltip3:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
-ShoppingTooltip3:HookScript("OnTooltipSetItem", attachItemTooltip)
 
 -- Glyphs
 hooksecurefunc(GameTooltip, "SetGlyph", function(self, ...)
