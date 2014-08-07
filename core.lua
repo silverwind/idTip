@@ -41,7 +41,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     local name, unit = self:GetUnit()
     if unit then
         local id = wod and strmatch(UnitGUID(unit) or "", ":(%d+):%x+$") or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
-        if id then
+        if id ~= 0 then
             addLine(GameTooltip, id, types.unit);
         end
     end
