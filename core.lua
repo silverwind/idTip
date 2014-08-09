@@ -11,8 +11,19 @@ local types = {
 }
 
 local function addLine(tooltip, id, type)
-    tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
-    tooltip:Show()
+    local found = false
+
+    for i = 1,15 do
+        local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
+        local text
+        if frame then text = frame:GetText() end
+        if text and text == type then found = true break end
+    end
+
+    if not found then
+        tooltip:AddDoubleLine(type, "|cffffffff" .. id)
+        tooltip:Show()
+    end
 end
 
 -- Spells
@@ -41,9 +52,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     local name, unit = self:GetUnit()
     if unit then
         local id = wod and strmatch(UnitGUID(unit) or "", ":(%d+):%x+$") or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
-        if id ~= 0 then
-            addLine(GameTooltip, id, types.unit);
-        end
+        if id ~= 0 then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
