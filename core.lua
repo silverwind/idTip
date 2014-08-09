@@ -47,12 +47,12 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
     if id then addLine(self, id, types.spell) end
 end)
 
--- Units
+-- NPCs
 GameTooltip:HookScript("OnTooltipSetUnit", function(self)
-    local name, unit = self:GetUnit()
+    local unit = select(2, self:GetUnit())
     if unit then
-        local id = wod and strmatch(UnitGUID(unit) or "", ":(%d+):%x+$") or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
-        if id ~= 0 then addLine(GameTooltip, id, types.unit) end
+        local id = wod and tonumber(strmatch(UnitGUID(unit) or "", ":(%d+):%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
+        if (id ~= 0) and (id ~= 970) then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
