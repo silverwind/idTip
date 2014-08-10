@@ -1,6 +1,6 @@
 ## Interface: 60000
 ## Title: idTip
-## Version: 6.0.0
-## Notes: Adds SpellIDs, ItemIDs and NPC IDs to the various tooltips ingame.
+## Version: 6.1.0
+## Notes: Adds IDs to the ingame tooltips.
 ## Author: Silverwind
 core.lua
