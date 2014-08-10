@@ -2,7 +2,7 @@
 
 Adds IDs to the ingame tooltips.
 
-![Screenshot](http://i.imgur.com/PxPeCNP.jpg)
+![Screenshot](http://i.imgur.com/ngS3fc9.jpg)
 
 ### Supported Types
 - Spell
