@@ -1,10 +1,19 @@
 #idTip
 
-Adds SpellIDs, ItemIDs, GlyphIDs and NPC IDs to the various ingame tooltip windows.
+Adds IDs to the ingame tooltips.
 
-![Screenshot](http://i.imgur.com/EENBCzt.jpg)
+![Screenshot](http://i.imgur.com/PxPeCNP.jpg)
 
-Please report any requests/bugs you are encountering through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
+### Supported Types
+- Spell
+- Item
+- Glyph
+- NPC
+- Quest
+- Talent
+- Achievement
+
+Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
 
 ###Downloads
 - [Addon Site on Curse](http://www.curse.com/addons/wow/spellid)
