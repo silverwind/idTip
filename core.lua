@@ -4,15 +4,16 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
 local wod = select(4, GetBuildInfo()) >= 60000
 
 local types = {
-    spell = "SpellID",
-    item  = "ItemID",
-    glyph = "GlyphID",
-    unit  = "NPC ID"
+    spell = "SpellID:",
+    item  = "ItemID:",
+    glyph = "GlyphID:",
+    unit  = "NPC ID:"
 }
 
 local function addLine(tooltip, id, type)
     local found = false
 
+    -- Check if we already added to this tooltip. Happens on the talent frame
     for i = 1,15 do
         local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
         local text
