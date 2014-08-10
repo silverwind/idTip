@@ -4,10 +4,13 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
 local wod = select(4, GetBuildInfo()) >= 60000
 
 local types = {
-    spell = "SpellID:",
-    item  = "ItemID:",
-    glyph = "GlyphID:",
-    unit  = "NPC ID:"
+    spell      = "SpellID:",
+    item       = "ItemID:",
+    glyph      = "GlyphID:",
+    unit       = "NPC ID:",
+    quest      = "Quest ID:",
+    talent     = "Talent ID:",
+    achievment = "Achievement ID:"
 }
 
 local function addLine(tooltip, id, type)
@@ -27,6 +30,28 @@ local function addLine(tooltip, id, type)
     end
 end
 
+-- All types, primarily for linked tooltips
+local function onSetHyperlink(self, link)
+    local type, id = string.match(link,"^(%a+):(%d+)")
+    if not type or not id then return end
+    if type == "spell" or type == "enchant" or type == "trade" then
+        addLine(self, id, types.spell)
+    elseif type == "glyph" then
+        addLine(self, id, types.glyph)
+    elseif type == "talent" then
+        addLine(self, id, types.talent)
+    elseif type == "quest" then
+        addLine(self, id, types.quest)
+    elseif type == "achievement" then
+        addLine(self, id, types.achievement)
+    elseif type == "item" then
+        addLine(self, id, types.item)
+    end
+end
+
+hooksecurefunc(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
+hooksecurefunc(GameTooltip, "SetHyperlink", onSetHyperlink)
+
 -- Spells
 hooksecurefunc(GameTooltip, "SetUnitBuff", function(self, ...)
     local id = select(11, UnitBuff(...))
@@ -43,6 +68,11 @@ hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
     if id then addLine(self, id, types.spell) end
 end)
 
+hooksecurefunc("SetItemRef", function(link, ...)
+    local id = tonumber(link:match("spell:(%d+)"))
+    if id then addLine(ItemRefTooltip, id, types.spell) end
+end)
+
 GameTooltip:HookScript("OnTooltipSetSpell", function(self)
     local id = select(3, self:GetSpell())
     if id then addLine(self, id, types.spell) end
@@ -53,16 +83,12 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     local unit = select(2, self:GetUnit())
     if unit then
         local id = wod and tonumber(strmatch(UnitGUID(unit) or "", ":(%d+):%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
+        -- ID 970 seems to be used for players
         if (id ~= 0) and (id ~= 970) then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
 -- Items
-hooksecurefunc("SetItemRef", function(link, ...)
-    local id = tonumber(link:match("spell:(%d+)"))
-    if id then addLine(ItemRefTooltip, id, types.item) end
-end)
-
 local function attachItemTooltip(self)
     local link = select(2, self:GetItem())
     if link then
