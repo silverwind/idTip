@@ -83,7 +83,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     if C_PetBattles.IsInBattle() then return end
     local unit = select(2, self:GetUnit())
     if unit then
-        local id = wod and tonumber(strmatch(UnitGUID(unit) or "", ":(%d+):%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
+        local id = wod and tonumber(strmatch(UnitGUID(unit) or "", "-(%d+)-%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
         -- ID 970 seems to be used for players
         if (id ~= 0) and (id ~= 970) then addLine(GameTooltip, id, types.unit) end
     end
