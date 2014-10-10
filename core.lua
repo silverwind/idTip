@@ -13,7 +13,7 @@ local types = {
     achievement = "Achievement ID:"
 }
 
-local function addLine(tooltip, id, type)
+local function addLine(tooltip, id, type, noEmptyLine)
     local found = false
 
     -- Check if we already added to this tooltip. Happens on the talent frame
@@ -25,7 +25,7 @@ local function addLine(tooltip, id, type)
     end
 
     if not found then
-        tooltip:AddLine(" ");
+        if not noEmptyLine then tooltip:AddLine(" ") end
         tooltip:AddDoubleLine(type, "|cffffffff" .. id)
         tooltip:Show()
     end
@@ -115,3 +115,23 @@ end)
 hooksecurefunc(GameTooltip, "SetGlyphByID", function(self, id)
     if id then addLine(self, id, types.glyph) end
 end)
+
+-- Achievement Frame Tooltips
+local f = CreateFrame("frame")
+f:RegisterEvent("ADDON_LOADED")
+f:SetScript("OnEvent", function(_, _, what)
+    if what == "Blizzard_AchievementUI" then
+        for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
+            button:HookScript("OnEnter", function()
+                GameTooltip:SetOwner(button, "ANCHOR_NONE")
+                GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+                addLine(GameTooltip, button.id, types.achievement, true)
+                GameTooltip:Show()
+            end)
+            button:HookScript("OnLeave", function()
+                GameTooltip:Hide()
+            end)
+        end
+    end
+end)
+
