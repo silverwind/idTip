@@ -4,13 +4,13 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
 local wod = select(4, GetBuildInfo()) >= 60000
 
 local types = {
-    spell       = "SpellID:",
-    item        = "ItemID:",
-    glyph       = "GlyphID:",
-    unit        = "NPC ID:",
-    quest       = "Quest ID:",
-    talent      = "Talent ID:",
-    achievement = "Achievement ID:"
+    spell       = "SpellID",
+    item        = "ItemID",
+    glyph       = "GlyphID",
+    unit        = "NPC ID",
+    quest       = "QuestID",
+    talent      = "TalentID",
+    achievement = "AchievementID"
 }
 
 local function addLine(tooltip, id, type, noEmptyLine)
@@ -26,7 +26,7 @@ local function addLine(tooltip, id, type, noEmptyLine)
 
     if not found then
         if not noEmptyLine then tooltip:AddLine(" ") end
-        tooltip:AddDoubleLine(type, "|cffffffff" .. id)
+        tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
         tooltip:Show()
     end
 end
