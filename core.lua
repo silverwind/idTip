@@ -4,13 +4,13 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
 local wod = select(4, GetBuildInfo()) >= 60000
 
 local types = {
-    spell      = "SpellID:",
-    item       = "ItemID:",
-    glyph      = "GlyphID:",
-    unit       = "NPC ID:",
-    quest      = "Quest ID:",
-    talent     = "Talent ID:",
-    achievment = "Achievement ID:"
+    spell       = "SpellID:",
+    item        = "ItemID:",
+    glyph       = "GlyphID:",
+    unit        = "NPC ID:",
+    quest       = "Quest ID:",
+    talent      = "Talent ID:",
+    achievement = "Achievement ID:"
 }
 
 local function addLine(tooltip, id, type)
@@ -25,6 +25,7 @@ local function addLine(tooltip, id, type)
     end
 
     if not found then
+        tooltip:AddLine(" ");
         tooltip:AddDoubleLine(type, "|cffffffff" .. id)
         tooltip:Show()
     end
@@ -85,7 +86,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     if unit then
         local id = wod and tonumber(strmatch(UnitGUID(unit) or "", "-(%d+)-%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
         -- ID 970 seems to be used for players
-        if (id ~= 0) and (id ~= 970) then addLine(GameTooltip, id, types.unit) end
+        if id and id ~= 0 and id ~= 970 then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
