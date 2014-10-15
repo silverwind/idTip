@@ -86,7 +86,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     if unit then
         local id = wod and tonumber(strmatch(UnitGUID(unit) or "", "-(%d+)-%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
         -- ID 970 seems to be used for players
-        if id and id ~= 0 and id ~= 970 then addLine(GameTooltip, id, types.unit) end
+        if id and id ~= 0 and id ~= 57 and id ~= 970 then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
