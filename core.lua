@@ -85,8 +85,6 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
         local guid = UnitGUID(unit) or ""
         local id   = tonumber(guid:match("-(%d+)-%x+$"), 10)
         local type = guid:match("%a+")
-
-        -- ID 970 seems to be used for players
         if id and type ~= "Player" then addLine(GameTooltip, id, types.unit) end
     end
 end)
