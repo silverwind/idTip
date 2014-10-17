@@ -1,7 +1,5 @@
-local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch =
-      hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind, strsub, strmatch
-
-local wod = select(4, GetBuildInfo()) >= 60000
+local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind =
+      hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind
 
 local types = {
     spell       = "SpellID",
@@ -84,9 +82,12 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     if C_PetBattles.IsInBattle() then return end
     local unit = select(2, self:GetUnit())
     if unit then
-        local id = wod and tonumber(strmatch(UnitGUID(unit) or "", "-(%d+)-%x+$"), 10) or tonumber(strsub(UnitGUID(unit) or "", 6, 10), 16)
+        local guid = UnitGUID(unit) or ""
+        local id   = tonumber(guid:match("-(%d+)-%x+$"), 10)
+        local type = guid:match("%a+")
+
         -- ID 970 seems to be used for players
-        if id and id ~= 0 and id ~= 57 and id ~= 970 then addLine(GameTooltip, id, types.unit) end
+        if id and type ~= "Player" then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
