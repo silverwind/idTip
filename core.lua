@@ -2,13 +2,13 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
       hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind
 
 local types = {
-    spell       = "SpellID",
-    item        = "ItemID",
-    glyph       = "GlyphID",
-    unit        = "NPC ID",
-    quest       = "QuestID",
-    talent      = "TalentID",
-    achievement = "AchievementID"
+    spell       = "SpellID:",
+    item        = "ItemID:",
+    glyph       = "GlyphID:",
+    unit        = "NPC ID:",
+    quest       = "QuestID:",
+    talent      = "TalentID:",
+    achievement = "AchievementID:"
 }
 
 local function addLine(tooltip, id, type, noEmptyLine)
@@ -24,7 +24,7 @@ local function addLine(tooltip, id, type, noEmptyLine)
 
     if not found then
         if not noEmptyLine then tooltip:AddLine(" ") end
-        tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
+        tooltip:AddDoubleLine(type, "|cffffffff" .. id)
         tooltip:Show()
     end
 end
