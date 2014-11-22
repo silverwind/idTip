@@ -11,7 +11,7 @@ local types = {
     achievement = "AchievementID:"
 }
 
-local function addLine(tooltip, id, type, noEmptyLine)
+local function addLine(tooltip, id, type)
     local found = false
 
     -- Check if we already added to this tooltip. Happens on the talent frame
@@ -23,7 +23,6 @@ local function addLine(tooltip, id, type, noEmptyLine)
     end
 
     if not found then
-        if not noEmptyLine then tooltip:AddLine(" ") end
         tooltip:AddDoubleLine(type, "|cffffffff" .. id)
         tooltip:Show()
     end
@@ -84,8 +83,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     if unit then
         local guid = UnitGUID(unit) or ""
         local id   = tonumber(guid:match("-(%d+)-%x+$"), 10)
-        local type = guid:match("%a+")
-        if id and type ~= "Player" then addLine(GameTooltip, id, types.unit) end
+        if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, types.unit) end
     end
 end)
 
@@ -124,7 +122,7 @@ f:SetScript("OnEvent", function(_, _, what)
             button:HookScript("OnEnter", function()
                 GameTooltip:SetOwner(button, "ANCHOR_NONE")
                 GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-                addLine(GameTooltip, button.id, types.achievement, true)
+                addLine(GameTooltip, button.id, types.achievement)
                 GameTooltip:Show()
             end)
             button:HookScript("OnLeave", function()
