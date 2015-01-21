@@ -12,6 +12,7 @@ Adds IDs to the ingame tooltips.
 - Quest
 - Talent
 - Achievement
+- Pet Ability
 
 Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
 
