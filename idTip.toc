@@ -1,6 +1,6 @@
-## Interface: 61000
+## Interface: 60100
 ## Title: idTip
-## Version: 6.1.8
+## Version: 6.1.9
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: Silverwind
 core.lua
