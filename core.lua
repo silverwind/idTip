@@ -135,11 +135,11 @@ end)
 
 -- Pet battle buttons
 hooksecurefunc("PetBattleAbilityButton_OnEnter", function(self)
-    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY);
+    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
     if ( self:GetEffectiveAlpha() > 0 ) then
-        local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, self:GetID()));
+        local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, self:GetID()))
         if id then
-            local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id);
+            local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
             PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. types.ability .. "|cffffffff " .. id .. "|r")
         end
     end
@@ -147,10 +147,10 @@ end)
 
 -- Pet battle auras
 hooksecurefunc("PetBattleAura_OnEnter", function(self)
-    local parent = self:GetParent();
+    local parent = self:GetParent()
     local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, self.auraIndex))
     if id then
-        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id);
+        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
         PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. types.ability .. "|cffffffff " .. id .. "|r")
     end
 end)
