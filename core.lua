@@ -9,7 +9,8 @@ local types = {
     quest       = "QuestID:",
     talent      = "TalentID:",
     achievement = "AchievementID:",
-    ability     = "AbilityID:"
+    ability     = "AbilityID:",
+    currency    = "CurrencyID:"
 }
 
 local function addLine(tooltip, id, type)
@@ -45,6 +46,8 @@ local function onSetHyperlink(self, link)
         addLine(self, id, types.achievement)
     elseif type == "item" then
         addLine(self, id, types.item)
+    elseif type == "currency" then
+        addLine(self, id, types.currency)
     end
 end
 
