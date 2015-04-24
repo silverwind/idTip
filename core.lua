@@ -157,3 +157,10 @@ hooksecurefunc("PetBattleAura_OnEnter", function(self)
         PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. types.ability .. "|cffffffff " .. id .. "|r")
     end
 end)
+
+-- Currencies
+hooksecurefunc(GameTooltip, "SetCurrencyToken", function(self, index)
+	local link = GetCurrencyListLink(index)
+	local id = tonumber(string.match(link,"currency:(%d+)"))
+	if id then addLine(self, id, types.currency) end
+end)
