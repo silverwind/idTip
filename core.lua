@@ -164,3 +164,11 @@ hooksecurefunc(GameTooltip, "SetCurrencyToken", function(self, index)
 	local id = tonumber(string.match(link,"currency:(%d+)"))
 	if id then addLine(self, id, types.currency) end
 end)
+
+hooksecurefunc(GameTooltip, "SetCurrencyByID", function(self, id)
+   if id then addLine(self, id, types.currency) end
+end)
+
+hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
+   if id then addLine(self, id, types.currency) end
+end)
