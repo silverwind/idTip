@@ -30,7 +30,7 @@ local function addLine(tooltip, id, type)
     end
 end
 
--- All types, primarily for linked tooltips
+-- All types, primarily for detached tooltips
 local function onSetHyperlink(self, link)
     local type, id = string.match(link,"^(%a+):(%d+)")
     if not type or not id then return end
@@ -160,8 +160,7 @@ end)
 
 -- Currencies
 hooksecurefunc(GameTooltip, "SetCurrencyToken", function(self, index)
-	local link = GetCurrencyListLink(index)
-	local id = tonumber(string.match(link,"currency:(%d+)"))
+	local id = tonumber(string.match(GetCurrencyListLink(index),"currency:(%d+)"))
 	if id then addLine(self, id, types.currency) end
 end)
 
