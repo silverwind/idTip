@@ -93,11 +93,25 @@ end)
 
 -- Items
 local function attachItemTooltip(self)
-    local link = select(2, self:GetItem())
-    if link then
-        local id = select(3, strfind(link, "^|%x+|Hitem:(%-?%d+):(%d+):(%d+).*"))
-        if id then addLine(self, id, types.item) end
+  local link = select(2, self:GetItem())
+  if link then
+    local id = select(3, strfind(link, "^|%x+|Hitem:(%-?%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(%-?%d+):(%-?%d+)"))
+    if id == "0" and TradeSkillFrame:IsVisible() then
+      if (GetMouseFocus():GetName()) == "TradeSkillSkillIcon" then
+        id = GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):") or nil
+      else
+        for i=1, 8 do
+          if (GetMouseFocus():GetName()) == "TradeSkillReagent"..i then
+            id = GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):") or nil
+            break
+          end
+        end
+      end
     end
+    if id then
+      addLine(self, id, types.item)
+    end
+  end
 end
 
 GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
