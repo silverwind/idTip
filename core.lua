@@ -86,7 +86,7 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
     local unit = select(2, self:GetUnit())
     if unit then
         local guid = UnitGUID(unit) or ""
-        local id   = tonumber(guid:match("-(%d+)-%x+$"), 10)
+        local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
         if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, types.unit) end
     end
 end)
@@ -100,7 +100,7 @@ local function attachItemTooltip(self)
       if (GetMouseFocus():GetName()) == "TradeSkillSkillIcon" then
         id = GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):") or nil
       else
-        for i=1, 8 do
+        for i = 1, 8 do
           if (GetMouseFocus():GetName()) == "TradeSkillReagent"..i then
             id = GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):") or nil
             break
