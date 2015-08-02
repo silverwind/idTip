@@ -3,4 +3,4 @@
 ## Version: 6.2.0
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: Silverwind
-core.lua
+idTip.lua
