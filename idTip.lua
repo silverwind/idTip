@@ -92,16 +92,13 @@ end)
 local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
   if link then
-    local id = string.match(link, "item:(%d+)")
-    if id == "0" and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() then
-      if (GetMouseFocus():GetName()) == "TradeSkillSkillIcon" then
-        id = GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):") or nil
-      else
-        for i = 1, 8 do
-          if (GetMouseFocus():GetName()) == "TradeSkillReagent"..i then
-            id = GetTradeSkillReagentItemLink(TradeSkillFrame.selectedSkill, i):match("item:(%d+):") or nil
-            break
-          end
+    local id = string.match(link, "item:(%d*)")
+    if id == "" or id == "0" and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
+      local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
+      for i = 1, 8 do
+        if GetMouseFocus().reagentIndex == i then
+          id = C_TradeSkillUI.GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d+):") or nil
+          break
         end
       end
     end
