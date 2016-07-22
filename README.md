@@ -7,7 +7,6 @@ Adds IDs to the ingame tooltips.
 ### Supported Types
 - Spell
 - Item
-- Glyph
 - NPC
 - Quest
 - Talent
