@@ -4,7 +4,6 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyph
 local types = {
     spell       = "SpellID:",
     item        = "ItemID:",
-    glyph       = "GlyphID:",
     unit        = "NPC ID:",
     quest       = "QuestID:",
     talent      = "TalentID:",
@@ -36,8 +35,6 @@ local function onSetHyperlink(self, link)
     if not type or not id then return end
     if type == "spell" or type == "enchant" or type == "trade" then
         addLine(self, id, types.spell)
-    elseif type == "glyph" then
-        addLine(self, id, types.glyph)
     elseif type == "talent" then
         addLine(self, id, types.talent)
     elseif type == "quest" then
@@ -120,16 +117,6 @@ ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
-
--- Glyphs
-hooksecurefunc(GameTooltip, "SetGlyph", function(self, ...)
-    local id = select(4, GetGlyphSocketInfo(...))
-    if id then addLine(self, id, types.glyph) end
-end)
-
-hooksecurefunc(GameTooltip, "SetGlyphByID", function(self, id)
-    if id then addLine(self, id, types.glyph) end
-end)
 
 -- Achievement Frame Tooltips
 local f = CreateFrame("frame")
