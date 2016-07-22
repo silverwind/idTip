@@ -92,7 +92,7 @@ end)
 local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
   if link then
-    local id = select(3, strfind(link, "^|%x+|Hitem:(%-?%d+):(%d+):(%d+):(%d+):(%d+):(%d+):(%-?%d+):(%-?%d+)"))
+    local id = string.match(link, "item:(%d+)")
     if id == "0" and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() then
       if (GetMouseFocus():GetName()) == "TradeSkillSkillIcon" then
         id = GetTradeSkillItemLink(TradeSkillFrame.selectedSkill):match("item:(%d+):") or nil
