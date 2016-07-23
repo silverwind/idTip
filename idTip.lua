@@ -93,7 +93,7 @@ local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
   if link then
     local id = string.match(link, "item:(%d*)")
-    if id == "" or id == "0" and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
+    if (id == "" or id == "0") and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
       local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
       for i = 1, 8 do
         if GetMouseFocus().reagentIndex == i then
