@@ -169,3 +169,8 @@ end)
 hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
    if id then addLine(self, id, types.currency) end
 end)
+
+-- Quests
+hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
+    if self.questID then addLine(GameTooltip, self.questID, types.quest) end
+end)
