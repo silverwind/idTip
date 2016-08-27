@@ -1,5 +1,7 @@
-local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind =
-    hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID, GetGlyphSocketInfo, tonumber, strfind
+local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
+      GetGlyphSocketInfo, tonumber, strfind
+    = hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
+      GetGlyphSocketInfo, tonumber, strfind
 
 local types = {
   spell       = "SpellID:",
