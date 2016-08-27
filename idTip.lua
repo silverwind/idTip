@@ -9,7 +9,8 @@ local types = {
     talent      = "TalentID:",
     achievement = "AchievementID:",
     ability     = "AbilityID:",
-    currency    = "CurrencyID:"
+    currency    = "CurrencyID:",
+    artifactpower = "ArtifactPowerID:"
 }
 
 local function addLine(tooltip, id, type)
@@ -75,6 +76,12 @@ end)
 GameTooltip:HookScript("OnTooltipSetSpell", function(self)
     local id = select(3, self:GetSpell())
     if id then addLine(self, id, types.spell) end
+end)
+
+-- ArtifactPowerIDs
+hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, id)
+    local spellid = C_ArtifactUI.GetPowerInfo(id)
+    if id then addLine(self, id, types.artifactpower) addLine(self, spellid, types.spell) end
 end)
 
 -- NPCs
