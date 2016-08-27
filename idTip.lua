@@ -81,7 +81,10 @@ end)
 -- ArtifactPowerIDs
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, id)
     local spellid = C_ArtifactUI.GetPowerInfo(id)
-    if id then addLine(self, id, types.artifactpower) addLine(self, spellid, types.spell) end
+    if id then
+        addLine(self, id, types.artifactpower)
+        addLine(self, spellid, types.spell)
+    end
 end)
 
 -- NPCs
