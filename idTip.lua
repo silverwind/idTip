@@ -196,3 +196,7 @@ do
     end
   end)
 end
+
+hooksecurefunc("TaskPOI_OnEnter", function(self)
+  if self and self.questID then addLine(WorldMapTooltip, self.questID, types.quest) end
+end)
