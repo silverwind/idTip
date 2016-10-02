@@ -1,6 +1,6 @@
 ## Interface: 70000
 ## Title: idTip
-## Version: 7.0.2
+## Version: 7.0.3
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: Silverwind
 idTip.lua
