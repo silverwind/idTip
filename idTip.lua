@@ -4,14 +4,14 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
       GetGlyphSocketInfo, tonumber, strfind
 
 local types = {
-  spell       = "SpellID:",
-  item        = "ItemID:",
-  unit        = "NPC ID:",
-  quest       = "QuestID:",
-  talent      = "TalentID:",
+  spell = "SpellID:",
+  item  = "ItemID:",
+  unit = "NPC ID:",
+  quest = "QuestID:",
+  talent = "TalentID:",
   achievement = "AchievementID:",
-  ability     = "AbilityID:",
-  currency    = "CurrencyID:",
+  ability = "AbilityID:",
+  currency = "CurrencyID:",
   artifactpower = "ArtifactPowerID:"
 }
 
@@ -80,7 +80,7 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   if id then addLine(self, id, types.spell) end
 end)
 
--- ArtifactPowerIDs
+-- Artifact Powers
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, id)
   local spellid = C_ArtifactUI.GetPowerInfo(id)
   if id then
