@@ -10,6 +10,7 @@ local types = {
   quest = "QuestID:",
   talent = "TalentID:",
   achievement = "AchievementID:",
+  criteria = "CriteriaID:",
   ability = "AbilityID:",
   currency = "CurrencyID:",
   artifactpower = "ArtifactPowerID:"
@@ -141,6 +142,29 @@ f:SetScript("OnEvent", function(_, _, what)
       end)
       button:HookScript("OnLeave", function()
         GameTooltip:Hide()
+      end)
+
+      local hooked = {}
+      hooksecurefunc("AchievementButton_GetCriteria", function(index, renderOffScreen)
+        local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
+        if frame and not hooked[frame] then
+          frame:HookScript("OnEnter", function(self)
+            local button = self:GetParent() and self:GetParent():GetParent()
+            if not button or not button.id then return end
+            local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
+            if criteriaid then
+              GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+              GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+              addLine(GameTooltip, button.id, types.achievement)
+              addLine(GameTooltip, criteriaid, types.criteria)
+              GameTooltip:Show()
+            end
+          end)
+          frame:HookScript("OnLeave", function()
+            GameTooltip:Hide()
+          end)
+          hooked[frame] = true
+        end
       end)
     end
   end
