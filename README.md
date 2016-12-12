@@ -11,6 +11,7 @@ Adds IDs to the ingame tooltips.
 - Quest
 - Talent
 - Achievement
+- Achievement Criteria
 - Pet Ability
 - Artifact Power
 
