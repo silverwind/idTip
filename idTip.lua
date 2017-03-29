@@ -13,7 +13,10 @@ local types = {
   criteria = "CriteriaID:",
   ability = "AbilityID:",
   currency = "CurrencyID:",
-  artifactpower = "ArtifactPowerID:"
+  artifactpower = "ArtifactPowerID:",
+  enchant= "EnchantID:",
+  bonus= "BonusID:",
+  gem= "Gemid:"
 }
 
 local function addLine(tooltip, id, type)
@@ -104,20 +107,59 @@ end)
 -- Items
 local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
+  local enchantid=""
+  local bonusid=""
+  local gemid=""
+  local bonuses = {}
+  local itemString = string.match(link, "item:([%-?%d:]+)")
+  local itemSplit = {}
+  
   if link then
-  local id = string.match(link, "item:(%d*)")
-  if (id == "" or id == "0") and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
-    local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
-    for i = 1, 8 do
-    if GetMouseFocus().reagentIndex == i then
-      id = C_TradeSkillUI.GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d+):") or nil
-      break
-    end
-    end
-  end
-  if id then
-    addLine(self, id, types.item)
-  end
+	  for v in string.gmatch(itemString, "(%d*:?)") do
+		if v == ":" then
+		  itemSplit[#itemSplit + 1] = 0
+		else
+		  itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+		end
+	  end
+	  for index=1, tonumber(itemSplit[13]) do
+			bonuses[#bonuses + 1] = itemSplit[13 + index]
+	  end
+	  local gems = {}
+	  for i=1, 4 do 
+		local _,gemLink = GetItemGem(link, i)
+		if gemLink then
+		  local gemDetail = string.match(gemLink, "item[%-?%d:]+")
+		  gems[#gems + 1] = string.match(gemDetail, "item:(%d+):")
+		elseif flags == 256 then
+		  gems[#gems + 1] = "0"
+		end
+	  end
+	  local id = string.match(link, "item:(%d*)")
+	  if (id == "" or id == "0") and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
+		local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
+		for i = 1, 8 do
+		if GetMouseFocus().reagentIndex == i then
+		  id = C_TradeSkillUI.GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
+		  break
+		end
+		end
+	  end
+	  if id then
+		addLine(self, id, types.item)
+		if itemSplit[2]~=0 then
+			enchantid=itemSplit[2]
+			addLine(self, enchantid, types.enchant)
+		end
+		if #bonuses > 0 then
+			bonusid=table.concat(bonuses, '/')
+			addLine(self, bonusid, types.bonus)
+		end
+		if #gems > 0 then
+			gemid= table.concat(gems, '/')
+			addLine(self, gemid, types.gem)
+		end
+	  end
   end
 end
 
