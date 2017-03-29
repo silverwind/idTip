@@ -1,4 +1,4 @@
-## Interface: 70100
+## Interface: 70200
 ## Title: idTip
 ## Version: 7.0.4
 ## Notes: Adds IDs to the ingame tooltips
