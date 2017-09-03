@@ -14,6 +14,9 @@ Adds IDs to the ingame tooltips.
 - Achievement Criteria
 - Pet Ability
 - Artifact Power
+- Bonus
+- Enchant
+- Gem
 
 Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
 
