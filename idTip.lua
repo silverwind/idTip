@@ -108,11 +108,13 @@ local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
   if not link then return end
 
+  local itemString = string.match(link, "item:([%-?%d:]+)")
+  if not itemString then return end
+
   local enchantid = ""
   local bonusid = ""
   local gemid = ""
   local bonuses = {}
-  local itemString = string.match(link, "item:([%-?%d:]+)")
   local itemSplit = {}
 
   for v in string.gmatch(itemString, "(%d*:?)") do
