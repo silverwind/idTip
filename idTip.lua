@@ -21,6 +21,7 @@ local types = {
 
 local function addLine(tooltip, id, type)
   local found = false
+  if not id or id == "" return end
 
   -- Check if we already added to this tooltip. Happens on the talent frame
   for i = 1,15 do
@@ -121,7 +122,7 @@ local function attachItemTooltip(self)
     if v == ":" then
       itemSplit[#itemSplit + 1] = 0
     else
-      itemSplit[#itemSplit + 1] = string.gsub(v, ':', '')
+      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
     end
   end
 
@@ -151,18 +152,18 @@ local function attachItemTooltip(self)
     end
   end
 
-  if id and id ~= "" then
+  if id then
     addLine(self, id, types.item)
-    if itemSplit[2] ~=0 then
+    if itemSplit[2] ~= 0 then
       enchantid = itemSplit[2]
       addLine(self, enchantid, types.enchant)
     end
     if #bonuses > 0 then
-      bonusid = table.concat(bonuses, '/')
+      bonusid = table.concat(bonuses, "/")
       addLine(self, bonusid, types.bonus)
     end
     if #gems > 0 then
-      gemid = table.concat(gems, '/')
+      gemid = table.concat(gems, "/")
       addLine(self, gemid, types.gem)
     end
   end
@@ -220,7 +221,7 @@ end)
 -- Pet battle buttons
 hooksecurefunc("PetBattleAbilityButton_OnEnter", function(self)
   local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
-  if ( self:GetEffectiveAlpha() > 0 ) then
+  if self:GetEffectiveAlpha() > 0 then
     local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, self:GetID()))
     if id then
       local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
