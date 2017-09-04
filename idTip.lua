@@ -151,7 +151,7 @@ local function attachItemTooltip(self)
     end
   end
 
-  if id then
+  if id and id ~= "" then
     addLine(self, id, types.item)
     if itemSplit[2] ~=0 then
       enchantid = itemSplit[2]
