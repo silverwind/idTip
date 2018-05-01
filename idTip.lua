@@ -21,7 +21,7 @@ local types = {
 
 local function addLine(tooltip, id, type)
   local found = false
-  if not id or id == "" return end
+  if not id or id == "" then return end
 
   -- Check if we already added to this tooltip. Happens on the talent frame
   for i = 1,15 do
