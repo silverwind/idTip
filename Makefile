@@ -1,35 +1,38 @@
 # os dependencies: git grep zip sed
-# npm dependencies: semver
-
 VERSION := $(shell egrep -o "[0-9]+\.[0-9]+\.[0-9]+" idTip.toc)
-VPATCH := $$(semver -i patch $(VERSION))
-VMINOR := $$(semver -i minor $(VERSION))
-VMAJOR := $$(semver -i major $(VERSION))
 
 patch:
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VPATCH)/" > idTip.toc
-	mkdir idTip && cp idTip.lua idTip.toc README.md idTip && \
-		zip idTip-$(VPATCH).zip idTip/idTip.lua idTip/idTip.toc idTip/README.md; rm -r idTip
-	git commit -am $(VPATCH)
-	git tag -a $(VPATCH) -m $(VPATCH)
+	$(eval VER := $(shell npx semver -i patch $(VERSION)))
+	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	rm -rf zip/idTip
+	mkdir -p zip/idTip
+	cp idTip.lua idTip.toc README.md zip/idTip
+	cd zip && zip idTip-$(VER).zip idTip/*
+	rm -rf zip/idTip
+	git commit -am $(VER)
+	git tag -a $(VER) -m $(VER)
 
 minor:
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VMINOR)/" > idTip.toc
-	mkdir idTip && cp idTip.lua idTip.toc README.md idTip && \
-		zip idTip-$(VMINOR).zip idTip/idTip.lua idTip/idTip.toc idTip/README.md; rm -r idTip
-	git commit -am $(VMINOR)
-	git tag -a $(VMINOR) -m $(VMINOR)
+	$(eval VER := $(shell npx semver -i minor $(VERSION)))
+	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	rm -rf zip/idTip
+	mkdir -p zip/idTip
+	cp idTip.lua idTip.toc README.md zip/idTip
+	cd zip && zip idTip-$(VER).zip idTip/*
+	rm -rf zip/idTip
+	git commit -am $(VER)
+	git tag -a $(VER) -m $(VER)
 
 major:
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VMINOR)/" > idTip.toc
-	mkdir idTip && cp idTip.lua idTip.toc README.md idTip && \
-		zip idTip-$(VMINOR).zip idTip/idTip.lua idTip/idTip.toc idTip/README.md; rm -r idTip
-	git commit -am $(VMINOR)
-	git tag -a $(VMINOR) -m $(VMINOR)
+	$(eval VER := $(shell npx semver -i major $(VERSION)))
+	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	rm -rf zip/idTip
+	mkdir -p zip/idTip
+	cp idTip.lua idTip.toc README.md zip/idTip
+	cd zip && zip idTip-$(VER).zip idTip/*
+	rm -rf zip/idTip
+	git commit -am $(VER)
+	git tag -a $(VER) -m $(VER)
 
-zip:
-	mkdir idTip && cp idTip.lua idTip.toc README.md idTip && \
-		zip idTip-$(VERSION).zip idTip/idTip.lua idTip/idTip.toc idTip/README.md; rm -r idTip
-
-.PHONY: patch minor major zip
+.PHONY: patch minor major
 
