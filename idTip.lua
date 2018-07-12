@@ -254,20 +254,10 @@ hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
    if id then addLine(self, id, types.currency) end
 end)
 
--- Quests
-do
-  local function questhook(self)
-    if self.questID then addLine(GameTooltip, self.questID, types.quest) end
-  end
-  local titlebuttonshooked = {}
-  hooksecurefunc("QuestLogQuests_GetTitleButton", function(index)
-    local titles = QuestMapFrame.QuestsFrame.Contents.Titles;
-    if titles[index] and not titlebuttonshooked[index] then
-      titles[index]:HookScript("OnEnter", questhook)
-      titlebuttonshooked[index] = true
-    end
-  end)
-end
+hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
+  local questID = select(8,GetQuestLogTitle(self.questLogIndex))
+  if questID then addLine(GameTooltip, questID, types.quest) end
+end)
 
 hooksecurefunc("TaskPOI_OnEnter", function(self)
   if self and self.questID then addLine(WorldMapTooltip, self.questID, types.quest) end
