@@ -255,7 +255,7 @@ hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
 end)
 
 hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
-  local questID = select(8,GetQuestLogTitle(self.questLogIndex))
+  local questID = select(8, GetQuestLogTitle(self.questLogIndex))
   if questID then addLine(GameTooltip, questID, types.quest) end
 end)
 
