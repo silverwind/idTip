@@ -5,7 +5,7 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
 
 local types = {
   spell = "SpellID",
-  item  = "ItemID",
+  item = "ItemID",
   unit = "NpcID",
   quest = "QuestID",
   talent = "TalentID",
@@ -86,17 +86,17 @@ hooksecurefunc(GameTooltip, "SetHyperlink", onSetHyperlink)
 -- Spells
 hooksecurefunc(GameTooltip, "SetUnitBuff", function(self, ...)
   local id = select(10, UnitBuff(...))
-  if id then addLine(self, id, types.spell) end
+  addLine(self, id, types.spell)
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self, ...)
   local id = select(10, UnitDebuff(...))
-  if id then addLine(self, id, types.spell) end
+  addLine(self, id, types.spell)
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitAura", function(self, ...)
   local id = select(10, UnitAura(...))
-  if id then addLine(self, id, types.spell) end
+  addLine(self, id, types.spell)
 end)
 
 hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
@@ -104,28 +104,39 @@ hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
   addLineByType(self, id, type)
 end)
 
+hooksecurefunc(GameTooltip, "SetSpellByID", function(self, id)
+  addLineByType(self, id, types.spell)
+end)
+
 hooksecurefunc("SetItemRef", function(link, ...)
   local id = tonumber(link:match("spell:(%d+)"))
-  if id then addLine(ItemRefTooltip, id, types.spell) end
+  addLine(ItemRefTooltip, id, types.spell)
 end)
 
 GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   local id = select(3, self:GetSpell())
-  if id then addLine(self, id, types.spell) end
+  addLine(self, id, types.spell)
 end)
 
 hooksecurefunc("SpellButton_OnEnter", function(self)
   local slot = SpellBook_GetSpellBookSlot(self)
   local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-  if spellID then addLine(GameTooltip, spellID, types.spell) end
+  addLine(GameTooltip, spellID, types.spell)
 end)
 
 -- Artifact Powers
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, powerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
-  local spellID = powerInfo.spellID
-  if powerID then addLine(self, powerID, types.artifactpower) end
-  if spellID then addLine(self, spellID, types.spell) end
+  addLine(self, powerID, types.artifactpower)
+  addLine(self, powerInfo.spellID, types.spell)
+end)
+
+-- Talents
+hooksecurefunc(GameTooltip, "SetTalent", function(self, id)
+  addLine(self, id, types.talent)
+end)
+hooksecurefunc(GameTooltip, "SetPvpTalent", function(self, id)
+  addLine(self, id, types.talent)
 end)
 
 -- NPCs
@@ -282,21 +293,21 @@ end)
 -- Currencies
 hooksecurefunc(GameTooltip, "SetCurrencyToken", function(self, index)
   local id = tonumber(string.match(GetCurrencyListLink(index),"currency:(%d+)"))
-  if id then addLine(self, id, types.currency) end
+  addLine(self, id, types.currency)
 end)
 
 hooksecurefunc(GameTooltip, "SetCurrencyByID", function(self, id)
-   if id then addLine(self, id, types.currency) end
+   addLine(self, id, types.currency)
 end)
 
 hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
-   if id then addLine(self, id, types.currency) end
+   addLine(self, id, types.currency)
 end)
 
 -- Quests
 hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
-  local questID = select(8, GetQuestLogTitle(self.questLogIndex))
-  if questID then addLine(GameTooltip, questID, types.quest) end
+  local id = select(8, GetQuestLogTitle(self.questLogIndex))
+  addLine(GameTooltip, id, types.quest)
 end)
 
 hooksecurefunc("TaskPOI_OnEnter", function(self)
