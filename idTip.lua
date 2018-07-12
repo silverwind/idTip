@@ -140,6 +140,10 @@ GameTooltip:HookScript("OnTooltipSetUnit", function(self)
 end)
 
 -- Items
+hooksecurefunc(GameTooltip, "SetToyByItemID", function(self, id)
+  addLineByType(self, id, "item")
+end)
+
 local function attachItemTooltip(self)
   local link = select(2, self:GetItem())
   if not link then return end
