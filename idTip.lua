@@ -4,20 +4,32 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
       GetGlyphSocketInfo, tonumber, strfind
 
 local types = {
-  spell = "SpellID:",
-  item  = "ItemID:",
-  unit = "NpcID:",
-  quest = "QuestID:",
-  talent = "TalentID:",
-  achievement = "AchievementID:",
-  criteria = "CriteriaID:",
-  ability = "AbilityID:",
-  currency = "CurrencyID:",
-  artifactpower = "ArtifactPowerID:",
-  enchant = "EnchantID:",
-  bonus = "BonusID:",
-  gem = "GemID:"
+  spell = "SpellID",
+  item  = "ItemID",
+  unit = "NpcID",
+  quest = "QuestID",
+  talent = "TalentID",
+  achievement = "AchievementID",
+  criteria = "CriteriaID",
+  ability = "AbilityID",
+  currency = "CurrencyID",
+  artifactpower = "ArtifactPowerID",
+  enchant = "EnchantID",
+  bonus = "BonusID",
+  gem = "GemID",
+  mount = "MountID",
+  companion = "CompanionID",
+  macro = "MacroID",
+  equipmentset = "EquipmentSetID",
 }
+
+-- debug dump function
+local function dump(...)
+  LoadAddOn("Blizzard_DebugTools")
+  for key, value in ipairs({...}) do
+    DevTools_Dump(value)
+  end
+end
 
 local function addLine(tooltip, id, type)
   local found = false
@@ -32,14 +44,12 @@ local function addLine(tooltip, id, type)
   end
 
   if not found then
-    tooltip:AddDoubleLine(type, "|cffffffff" .. id)
+    tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
     tooltip:Show()
   end
 end
 
--- All types, primarily for detached tooltips
-local function onSetHyperlink(self, link)
-  local type, id = string.match(link,"^(%a+):(%d+)")
+local function addLineByType(self, id, type)
   if not type or not id then return end
   if type == "spell" or type == "enchant" or type == "trade" then
     addLine(self, id, types.spell)
@@ -53,7 +63,21 @@ local function onSetHyperlink(self, link)
     addLine(self, id, types.item)
   elseif type == "currency" then
     addLine(self, id, types.currency)
+  elseif type == "summonmount" then
+    addLine(self, id, types.mount)
+  elseif type == "companion" then
+    addLine(self, id, types.companion)
+  elseif type == "macro" then
+    addLine(self, id, types.macro)
+  elseif type == "equipmentset" then
+    addLine(self, id, types.equipmentset)
   end
+end
+
+-- All types, primarily for detached tooltips
+local function onSetHyperlink(self, link)
+  local type, id = string.match(link,"^(%a+):(%d+)")
+  addLineByType(self, type, id)
 end
 
 hooksecurefunc(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
@@ -65,14 +89,19 @@ hooksecurefunc(GameTooltip, "SetUnitBuff", function(self, ...)
   if id then addLine(self, id, types.spell) end
 end)
 
-hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self,...)
+hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self, ...)
   local id = select(10, UnitDebuff(...))
   if id then addLine(self, id, types.spell) end
 end)
 
-hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
+hooksecurefunc(GameTooltip, "SetUnitAura", function(self, ...)
   local id = select(10, UnitAura(...))
   if id then addLine(self, id, types.spell) end
+end)
+
+hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
+  local type, id = GetActionInfo(slot)
+  addLineByType(self, id, type)
 end)
 
 hooksecurefunc("SetItemRef", function(link, ...)
