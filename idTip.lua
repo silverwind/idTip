@@ -44,7 +44,7 @@ local function addLine(tooltip, id, type)
   end
 
   if not found then
-    tooltip:AddDoubleLine(type .. ":", "|cffffffff" .. id)
+    tooltip:AddLine(NORMAL_FONT_COLOR_CODE .. type .. ": ".. HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE)
     tooltip:Show()
   end
 end
