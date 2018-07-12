@@ -85,6 +85,12 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   if id then addLine(self, id, types.spell) end
 end)
 
+hooksecurefunc("SpellButton_OnEnter", function(self)
+  local slot = SpellBook_GetSpellBookSlot(self)
+  local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+  if spellID then addLine(GameTooltip, spellID, types.spell) end
+end)
+
 -- Artifact Powers
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, powerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
@@ -254,6 +260,7 @@ hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
    if id then addLine(self, id, types.currency) end
 end)
 
+-- Quests
 hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
   local questID = select(8, GetQuestLogTitle(self.questLogIndex))
   if questID then addLine(GameTooltip, questID, types.quest) end
