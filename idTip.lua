@@ -61,17 +61,17 @@ hooksecurefunc(GameTooltip, "SetHyperlink", onSetHyperlink)
 
 -- Spells
 hooksecurefunc(GameTooltip, "SetUnitBuff", function(self, ...)
-  local id = select(11, UnitBuff(...))
+  local id = select(10, UnitBuff(...))
   if id then addLine(self, id, types.spell) end
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitDebuff", function(self,...)
-  local id = select(11, UnitDebuff(...))
+  local id = select(10, UnitDebuff(...))
   if id then addLine(self, id, types.spell) end
 end)
 
 hooksecurefunc(GameTooltip, "SetUnitAura", function(self,...)
-  local id = select(11, UnitAura(...))
+  local id = select(10, UnitAura(...))
   if id then addLine(self, id, types.spell) end
 end)
 
