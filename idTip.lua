@@ -124,6 +124,14 @@ hooksecurefunc("SpellButton_OnEnter", function(self)
   addLine(GameTooltip, spellID, types.spell)
 end)
 
+hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
+  addLine(self, id, types.spell)
+end)
+
+hooksecurefunc(GameTooltip, "SetRecipeRankInfo", function(self, id)
+  addLine(self, id, types.spell)
+end)
+
 -- Artifact Powers
 hooksecurefunc(GameTooltip, "SetArtifactPowerByID", function(self, powerID)
   local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
@@ -153,6 +161,10 @@ end)
 -- Items
 hooksecurefunc(GameTooltip, "SetToyByItemID", function(self, id)
   addLineByType(self, id, "item")
+end)
+
+hooksecurefunc(GameTooltip, "SetRecipeReagentItem", function(self, id)
+  addLine(self, id, types.item)
 end)
 
 local function attachItemTooltip(self)
