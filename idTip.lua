@@ -40,7 +40,7 @@ local function addLine(tooltip, id, type)
     local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
     local text
     if frame then text = frame:GetText() end
-    if text and text == type then found = true break end
+    if text and string.find(text, type .. ": ") then found = true break end
   end
 
   if not found then
