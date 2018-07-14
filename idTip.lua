@@ -40,11 +40,13 @@ local function addLine(tooltip, id, type)
     local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
     local text
     if frame then text = frame:GetText() end
-    if text and string.find(text, type .. ": ") then found = true break end
+    if text and string.find(text, type .. ":") then found = true break end
   end
 
   if not found then
-    tooltip:AddLine(NORMAL_FONT_COLOR_CODE .. type .. ": ".. HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE)
+    local left = NORMAL_FONT_COLOR_CODE .. type .. ":" .. FONT_COLOR_CODE_CLOSE
+    local right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
+    tooltip:AddDoubleLine(left, right)
     tooltip:Show()
   end
 end
