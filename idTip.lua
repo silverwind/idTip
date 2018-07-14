@@ -23,7 +23,7 @@ local types = {
   equipmentset = "EquipmentSetID",
 }
 
--- debug dump function
+-- Debug dump function
 local function dump(...)
   LoadAddOn("Blizzard_DebugTools")
   for key, value in ipairs({...}) do
@@ -74,11 +74,16 @@ local function addLineByType(self, id, type)
   end
 end
 
--- All types, primarily for detached tooltips
+-- All types
 local function onSetHyperlink(self, link)
   local type, id = string.match(link,"^(%a+):(%d+)")
   addLineByType(self, type, id)
 end
+
+hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
+  local type, id = GetActionInfo(slot)
+  addLineByType(self, id, type)
+end)
 
 hooksecurefunc(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 hooksecurefunc(GameTooltip, "SetHyperlink", onSetHyperlink)
@@ -97,11 +102,6 @@ end)
 hooksecurefunc(GameTooltip, "SetUnitAura", function(self, ...)
   local id = select(10, UnitAura(...))
   addLine(self, id, types.spell)
-end)
-
-hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
-  local type, id = GetActionInfo(slot)
-  addLineByType(self, id, type)
 end)
 
 hooksecurefunc(GameTooltip, "SetSpellByID", function(self, id)
