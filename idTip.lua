@@ -6,7 +6,7 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
 local kinds = {
   spell = "SpellID",
   item = "ItemID",
-  unit = "NpcID",
+  unit = "NPCID",
   quest = "QuestID",
   talent = "TalentID",
   achievement = "AchievementID",
@@ -24,14 +24,6 @@ local kinds = {
   visual = "VisualID",
   source = "SourceID",
 }
-
--- Debug dump function
-local function dump(...)
-  LoadAddOn("Blizzard_DebugTools")
-  for key, value in ipairs({...}) do
-    DevTools_Dump(value)
-  end
-end
 
 local function contains(table, element)
   for _, value in pairs(table) do
