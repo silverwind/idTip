@@ -33,32 +33,28 @@ local function contains(table, element)
 end
 
 local function addLine(tooltip, id, kind)
-  local found = false
   if not id or id == "" then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Check if we already added to this tooltip. Happens on the talent frame
+  local frame, text
   for i = 1,15 do
-    local frame = _G[tooltip:GetName() .. "TextLeft" .. i]
-    local text
+    frame = _G[tooltip:GetName() .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
-    if text and string.find(text, kind .. ":") then found = true break end
+    if text and string.find(text, kind .. ":") then return end
   end
 
-  if not found then
-    local left, right
-
-    if type(id) == "table" then
-      left = NORMAL_FONT_COLOR_CODE .. kind .. "s:" .. FONT_COLOR_CODE_CLOSE
-      right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ", ") .. FONT_COLOR_CODE_CLOSE
-    else
-      left = NORMAL_FONT_COLOR_CODE .. kind .. ":" .. FONT_COLOR_CODE_CLOSE
-      right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
-    end
-
-    tooltip:AddDoubleLine(left, right)
-    tooltip:Show()
+  local left, right
+  if type(id) == "table" then
+    left = NORMAL_FONT_COLOR_CODE .. kind .. "s:" .. FONT_COLOR_CODE_CLOSE
+    right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ", ") .. FONT_COLOR_CODE_CLOSE
+  else
+    left = NORMAL_FONT_COLOR_CODE .. kind .. ":" .. FONT_COLOR_CODE_CLOSE
+    right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
   end
+
+  tooltip:AddDoubleLine(left, right)
+  tooltip:Show()
 end
 
 local function addLineByKind(self, id, kind)
