@@ -3,7 +3,7 @@ VERSION := $(shell egrep -o "[0-9]+\.[0-9]+\.[0-9]+" idTip.toc)
 
 patch:
 	$(eval VER := $(shell npx semver -i patch $(VERSION)))
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" idTip.toc
 	rm -rf zip/idTip
 	mkdir -p zip/idTip
 	cp idTip.lua idTip.toc README.md zip/idTip
@@ -14,7 +14,7 @@ patch:
 
 minor:
 	$(eval VER := $(shell npx semver -i minor $(VERSION)))
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" idTip.toc
 	rm -rf zip/idTip
 	mkdir -p zip/idTip
 	cp idTip.lua idTip.toc README.md zip/idTip
@@ -25,7 +25,7 @@ minor:
 
 major:
 	$(eval VER := $(shell npx semver -i major $(VERSION)))
-	cat idTip.toc | sed -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" > idTip.toc
+	sed -i -E "s/[0-9]+\.[0-9]+\.[0-9]+/$(VER)/" idTip.toc
 	rm -rf zip/idTip
 	mkdir -p zip/idTip
 	cp idTip.lua idTip.toc README.md zip/idTip
