@@ -87,7 +87,7 @@ end
 -- All kinds
 local function onSetHyperlink(self, link)
   local kind, id = string.match(link,"^(%a+):(%d+)")
-  addLineByKind(self, kind, id)
+  addLineByKind(self, id, kind)
 end
 
 hooksecurefunc(GameTooltip, "SetAction", function(self, slot)
