@@ -347,5 +347,5 @@ hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
 end)
 
 hooksecurefunc("TaskPOI_OnEnter", function(self)
-  if self and self.questID then addLine(WorldMapTooltip, self.questID, kinds.quest) end
+  if self and self.questID then addLine(GameTooltip, self.questID, kinds.quest) end
 end)
