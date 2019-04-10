@@ -29,5 +29,5 @@ Please report any requests/bugs through an [issue](https://github.com/silverwind
 
 ## Downloads
 
-- [Addon Site on Curse](https://www.curseforge.com/wow/addons/idtip)
+- [Addon Site on Curse](https://wow.curseforge.com/projects/idtip)
 - [Addon Site on WoWInterface](http://www.wowinterface.com/downloads/fileinfo.php?id=17033)
