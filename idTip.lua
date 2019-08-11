@@ -6,7 +6,7 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
 local kinds = {
   spell = "SpellID",
   item = "ItemID",
-  unit = "NPCID",
+  unit = "NPC ID",
   quest = "QuestID",
   talent = "TalentID",
   achievement = "AchievementID",
