@@ -1,4 +1,4 @@
-## Interface: 80100
+## Interface: 80200
 ## Title: idTip
 ## Version: 8.1.4
 ## Notes: Adds IDs to the ingame tooltips
