@@ -8,4 +8,7 @@
 ## Version: @project-version@
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: silverwind
+## X-Curse-Project-ID: 24541
+## X-WoWI-ID: 17033
+
 idTip.lua
