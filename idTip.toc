@@ -1,4 +1,4 @@
-## Interface: 90100
+## Interface: 90001
 ## Title: idTip
 ## Version: 9.0.1
 ## Notes: Adds IDs to the ingame tooltips
