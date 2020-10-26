@@ -1,1 +1,3 @@
-zip
+/node_modules
+/zip
+.DS_Store

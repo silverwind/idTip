@@ -1,5 +1,5 @@
 zip:
-	$(eval VER := $(shell jq .version package.json))
+	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
 	rm -rf zip/idTip
 	mkdir -p zip/idTip
 	cp idTip.lua idTip.toc README.md zip/idTip
@@ -7,15 +7,18 @@ zip:
 	rm -rf zip/idTip
 
 patch:
-	npx ver patch idTip.toc
+	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
+	yarn -s run versions -b $(VER) -P patch idTip.toc
 	$(MAKE) zip
 
 minor:
-	npx ver minor idTip.toc
+	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
+	yarn -s run versions -b $(VER) -P minor idTip.toc
 	$(MAKE) zip
 
 major:
-	npx ver major idTip.toc
+	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
+	yarn -s run versions -b $(VER) -P major idTip.toc
 	$(MAKE) zip
 
 .PHONY: zip patch minor major

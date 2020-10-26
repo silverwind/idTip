@@ -1,12 +1,8 @@
 {
   "name": "idTip",
-  "version": "8.2.1",
   "repository": "silverwind/idTip",
   "license": "BSD-2-Clause",
-  "dependencies": {
-    "semver": "^5.5.0"
-  },
   "devDependencies": {
-    "ver": "5.1.2"
+    "versions": "8.4.3"
   }
 }
