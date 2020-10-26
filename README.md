@@ -14,6 +14,7 @@ Adds IDs to the ingame tooltips.
 - Achievement
 - Achievement Criteria
 - Pet Ability
+- Pet Species
 - Artifact Power
 - Bonus
 - Enchant
