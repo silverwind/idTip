@@ -23,6 +23,7 @@ local kinds = {
   equipmentset = "EquipmentSetID",
   visual = "VisualID",
   source = "SourceID",
+  species = "SpeciesID",
 }
 
 local isClassicWow = select(4,GetBuildInfo()) < 20000
@@ -162,6 +163,16 @@ if not isClassicWow then
     local spellID = select(6, GetPvpTalentInfoByID(id))
     addLine(self, id, kinds.talent)
     addLine(self, spellID, kinds.spell)
+  end)
+
+  -- Pet Journal team icon
+  hooksecurefunc(GameTooltip, "SetCompanionPet", function(self, petID)
+    local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
+    if speciesID then
+      local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesID));
+      addLine(GameTooltip, speciesID, kinds.species);
+      addLine(GameTooltip, npcId, kinds.unit);
+    end
   end)
 end
 -- NPCs
@@ -310,6 +321,15 @@ f:SetScript("OnEvent", function(_, _, what)
       if #sourceIDs ~= 0 then addLine(GameTooltip, sourceIDs, kinds.source) end
       if #itemIDs ~= 0 then addLine(GameTooltip, itemIDs, kinds.item) end
     end)
+
+    -- Pet Journal selected pet info icon
+    PetJournalPetCardPetInfo:HookScript("OnEnter", function(self)
+      if PetJournalPetCard.speciesID then
+        local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
+        addLine(GameTooltip, PetJournalPetCard.speciesID, kinds.species);
+        addLine(GameTooltip, npcId, kinds.unit);
+      end
+    end);
   end
 end)
 
