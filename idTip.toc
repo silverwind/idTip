@@ -1,6 +1,6 @@
-## Interface: 80200
+## Interface: 90001
 ## Title: idTip
-## Version: 8.2.1
+## Version: 9.0.1
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: silverwind
 idTip.lua
