@@ -330,6 +330,14 @@ f:SetScript("OnEvent", function(_, _, what)
         addLine(GameTooltip, npcId, kinds.unit);
       end
     end);
+
+  elseif what == "Blizzard_GarrisonUI" then
+    -- ability id
+    hooksecurefunc("AddAutoCombatSpellToTooltip", function (self, info)
+      if info and info.autoCombatSpellID then
+        addLine(self, info.autoCombatSpellID, kinds.ability)
+      end
+    end)
   end
 end)
 
