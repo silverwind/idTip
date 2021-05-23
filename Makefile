@@ -13,7 +13,7 @@ zip:
 	perl -p -i -e 's|Interface: [0-9]+|Interface: 20501|g' idTip.toc
 	cp idTip.lua idTip.toc README.md zip/idTip
 	cd zip && zip idTip-$(VER)-classic.zip idTip/*
-	perl -p -i -e 's|Interface: [0-9]+|Interface: 90001|g' idTip.toc
+	perl -p -i -e 's|Interface: [0-9]+|Interface: 90005|g' idTip.toc
 	rm -rf zip/idTip
 
 patch: node_modules
