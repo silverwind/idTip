@@ -25,6 +25,7 @@ Adds IDs to the ingame tooltips.
 - Equipment Set
 - Visual
 - Source
+- Garrison Ability
 
 Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
 
