@@ -26,7 +26,7 @@ local kinds = {
   species = "SpeciesID",
 }
 
-local isClassicWow = select(4,GetBuildInfo()) < 20000
+local isClassicWow = select(4,GetBuildInfo()) < 90000
 
 local function contains(table, element)
   for _, value in pairs(table) do
