@@ -1,3 +1,7 @@
+node_modules: package.json
+	npm install --no-save
+	@touch node_modules
+
 zip:
 	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
 	rm -rf zip/idTip
@@ -12,19 +16,19 @@ zip:
 	perl -p -i -e 's|Interface: [0-9]+|Interface: 90001|g' idTip.toc
 	rm -rf zip/idTip
 
-patch:
+patch: node_modules
 	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	yarn -s run versions -b $(VER) -P patch idTip.toc
+	npx versions -b $(VER) -P patch idTip.toc
 	$(MAKE) zip
 
-minor:
+minor: node_modules
 	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	yarn -s run versions -b $(VER) -P minor idTip.toc
+	npx versions -b $(VER) -P minor idTip.toc
 	$(MAKE) zip
 
-major:
+major: node_modules
 	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	yarn -s run versions -b $(VER) -P major idTip.toc
+	npx versions -b $(VER) -P major idTip.toc
 	$(MAKE) zip
 
 .PHONY: zip patch minor major
