@@ -10,7 +10,7 @@ zip:
 	cd zip && zip idTip-$(VER)-retail.zip idTip/*
 	rm -rf zip/idTip
 	mkdir -p zip/idTip
-	perl -p -i -e 's|Interface: [0-9]+|Interface: 11305|g' idTip.toc
+	perl -p -i -e 's|Interface: [0-9]+|Interface: 20501|g' idTip.toc
 	cp idTip.lua idTip.toc README.md zip/idTip
 	cd zip && zip idTip-$(VER)-classic.zip idTip/*
 	perl -p -i -e 's|Interface: [0-9]+|Interface: 90001|g' idTip.toc
