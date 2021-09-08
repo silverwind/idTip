@@ -24,6 +24,7 @@ local kinds = {
   visual = "VisualID",
   source = "SourceID",
   species = "SpeciesID",
+  icon = "IconID",
 }
 
 local isClassicWow = select(4,GetBuildInfo()) < 90000
@@ -57,6 +58,15 @@ local function addLine(tooltip, id, kind)
   end
 
   tooltip:AddDoubleLine(left, right)
+
+  if kind == kinds.spell then
+    iconId = select(3, GetSpellInfo(id))
+    if iconId then addLine(tooltip, iconId, kinds.icon) end
+  elseif kind == kinds.item then
+    iconId = C_Item.GetItemIconByID(id)
+    if iconId then addLine(tooltip, iconId, kinds.icon) end
+  end
+
   tooltip:Show()
 end
 
