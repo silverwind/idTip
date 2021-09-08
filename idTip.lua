@@ -45,15 +45,15 @@ local function addLine(tooltip, id, kind)
   for i = 1,15 do
     frame = _G[tooltip:GetName() .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
-    if text and string.find(text, kind .. ":") then return end
+    if text and string.find(text, kind) then return end
   end
 
   local left, right
   if type(id) == "table" then
-    left = NORMAL_FONT_COLOR_CODE .. kind .. "s:" .. FONT_COLOR_CODE_CLOSE
+    left = NORMAL_FONT_COLOR_CODE .. kind .. "s" .. FONT_COLOR_CODE_CLOSE
     right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ", ") .. FONT_COLOR_CODE_CLOSE
   else
-    left = NORMAL_FONT_COLOR_CODE .. kind .. ":" .. FONT_COLOR_CODE_CLOSE
+    left = NORMAL_FONT_COLOR_CODE .. kind .. FONT_COLOR_CODE_CLOSE
     right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
   end
 
