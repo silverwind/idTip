@@ -1,6 +1,6 @@
 ## Interface: 90005
 ## Title: idTip
-## Version: 10.1.0
+## Version: 10.1.1
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: silverwind
 idTip.lua
