@@ -4,30 +4,7 @@ Adds IDs to the ingame tooltips.
 
 ![Screenshot](http://i.imgur.com/ngS3fc9.jpg)
 
-## Supported Types
-
-- Spell
-- Item
-- NPC
-- Quest
-- Talent
-- Achievement
-- Achievement Criteria
-- Pet Ability
-- Pet Species
-- Artifact Power
-- Bonus
-- Enchant
-- Gem
-- Mount
-- Companion
-- Macro
-- Equipment Set
-- Visual
-- Source
-- Garrison Ability
-
-Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new) on GitHub.
+Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new).
 
 ## Downloads
 
