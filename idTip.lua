@@ -25,6 +25,8 @@ local kinds = {
   source = "SourceID",
   species = "SpeciesID",
   icon = "IconID",
+  areapoi = "AreaPoiID",
+  vignette = "VignetteID",
 }
 
 local isClassicWow = select(4,GetBuildInfo()) < 90000
@@ -396,5 +398,15 @@ if not isClassicWow then
 
   hooksecurefunc("TaskPOI_OnEnter", function(self)
     if self and self.questID then addLine(GameTooltip, self.questID, kinds.quest) end
+  end)
+
+  -- AreaPois (on the world map)
+  hooksecurefunc(AreaPOIPinMixin, "TryShowTooltip", function(self)
+    if self and self.areaPoiID then addLine(GameTooltip, self.areaPoiID, kinds.areapoi) end
+  end)
+
+  -- Vignettes (on the world map)
+  hooksecurefunc(VignettePinMixin, "OnMouseEnter", function(self)
+    if self and self.vignetteInfo and self.vignetteInfo.vignetteID then addLine(GameTooltip, self.vignetteInfo.vignetteID, kinds.vignette) end
   end)
 end
