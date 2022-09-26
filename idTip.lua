@@ -141,22 +141,13 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   addLine(self, id, kinds.spell)
 end)
 
--- handle dragonflight spell changes
-local _SpellButtonMixin_OnEnter = SpellButtonMixin.OnEnter
-
-SpellButtonMixin.OnEnter = function(self)
+hooksecurefunc(SpellButtonMixin, "OnEnter", function(self)
 	local slot = SpellBook_GetSpellBookSlot(self)
 	local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
 	addLine(GameTooltip, spellID, kinds.spell)
-	_SpellButtonMixin_OnEnter(self)
-end
+end)
 
--- handle dragon flight talents
-local _TalentDisplayMixin_SetTooltipInternal = TalentDisplayMixin.SetTooltipInternal
-
-TalentDisplayMixin.SetTooltipInternal = function(self)
-	_TalentDisplayMixin_SetTooltipInternal(self)
-
+hooksecurefunc(TalentDisplayMixin, "SetTooltipInternal", function(self)
 	if self then
 		local spellID = self:GetSpellID()
 		if spellID then
@@ -165,13 +156,12 @@ TalentDisplayMixin.SetTooltipInternal = function(self)
 			addLine(GameTooltip, overrideSpellID, kinds.spell)
 		end
 	end
-end
+end)
 
 if not isClassicWow then
-  -- todo
-  -- hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
-  --   addLine(self, id, kinds.spell)
-  -- end)
+	hooksecurefunc(C_TradeSkillUI, "SetTooltipRecipeResultItem", function(id)
+		addLine(GameTooltip, id, kinds.spell)
+	end)
 
   hooksecurefunc(GameTooltip, "SetRecipeRankInfo", function(self, id)
     addLine(self, id, kinds.spell)
