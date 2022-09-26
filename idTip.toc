@@ -1,4 +1,4 @@
-## Interface: 100005
+## Interface: 100002
 ## Title: idTip
 ## Version: 10.1.1
 ## Notes: Adds IDs to the ingame tooltips

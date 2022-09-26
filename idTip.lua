@@ -30,6 +30,7 @@ local kinds = {
 }
 
 local isClassicWow = select(4,GetBuildInfo()) < 90000
+local isDragonFlight = select(4,GetBuildInfo()) > 100000
 
 local function contains(table, element)
   for _, value in pairs(table) do
@@ -143,27 +144,41 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   addLine(self, id, kinds.spell)
 end)
 
-hooksecurefunc(SpellButtonMixin, "OnEnter", function(self)
-	local slot = SpellBook_GetSpellBookSlot(self)
-	local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-	addLine(GameTooltip, spellID, kinds.spell)
-end)
+if isDragonFlight then
+  hooksecurefunc(SpellButtonMixin, "OnEnter", function(self)
+    local slot = SpellBook_GetSpellBookSlot(self)
+    local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+    addLine(GameTooltip, spellID, kinds.spell)
+  end)
 
-hooksecurefunc(TalentDisplayMixin, "SetTooltipInternal", function(self)
-	if self then
-		local spellID = self:GetSpellID()
-		if spellID then
-			local overrideSpellID = C_SpellBook.GetOverrideSpell(spellID)
+  hooksecurefunc(TalentDisplayMixin, "SetTooltipInternal", function(self)
+    if self then
+      local spellID = self:GetSpellID()
+      if spellID then
+        local overrideSpellID = C_SpellBook.GetOverrideSpell(spellID)
 
-			addLine(GameTooltip, overrideSpellID, kinds.spell)
-		end
-	end
-end)
+        addLine(GameTooltip, overrideSpellID, kinds.spell)
+      end
+    end
+  end)
+else
+  hooksecurefunc("SpellButton_OnEnter", function(self)
+    local slot = SpellBook_GetSpellBookSlot(self)
+    local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+    addLine(GameTooltip, spellID, kinds.spell)
+  end)
+end
 
 if not isClassicWow then
-	hooksecurefunc(C_TradeSkillUI, "SetTooltipRecipeResultItem", function(id)
-		addLine(GameTooltip, id, kinds.spell)
-	end)
+  if isDragonFlight then
+	  hooksecurefunc(C_TradeSkillUI, "SetTooltipRecipeResultItem", function(id)
+	  	addLine(GameTooltip, id, kinds.spell)
+	  end)
+  else
+    hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
+      addLine(self, id, kinds.spell)
+    end)
+  end
 
   hooksecurefunc(GameTooltip, "SetRecipeRankInfo", function(self, id)
     addLine(self, id, kinds.spell)
