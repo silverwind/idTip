@@ -141,16 +141,37 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
   addLine(self, id, kinds.spell)
 end)
 
-hooksecurefunc("SpellButton_OnEnter", function(self)
-  local slot = SpellBook_GetSpellBookSlot(self)
-  local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-  addLine(GameTooltip, spellID, kinds.spell)
-end)
+-- handle dragonflight spell changes
+local _SpellButtonMixin_OnEnter = SpellButtonMixin.OnEnter
+
+SpellButtonMixin.OnEnter = function(self)
+	local slot = SpellBook_GetSpellBookSlot(self)
+	local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+	addLine(GameTooltip, spellID, kinds.spell)
+	_SpellButtonMixin_OnEnter(self)
+end
+
+-- handle dragon flight talents
+local _TalentDisplayMixin_SetTooltipInternal = TalentDisplayMixin.SetTooltipInternal
+
+TalentDisplayMixin.SetTooltipInternal = function(self)
+	_TalentDisplayMixin_SetTooltipInternal(self)
+
+	if self then
+		local spellID = self:GetSpellID()
+		if spellID then
+			local overrideSpellID = C_SpellBook.GetOverrideSpell(spellID)
+
+			addLine(GameTooltip, overrideSpellID, kinds.spell)
+		end
+	end
+end
 
 if not isClassicWow then
-  hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
-    addLine(self, id, kinds.spell)
-  end)
+  -- todo
+  -- hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
+  --   addLine(self, id, kinds.spell)
+  -- end)
 
   hooksecurefunc(GameTooltip, "SetRecipeRankInfo", function(self, id)
     addLine(self, id, kinds.spell)
