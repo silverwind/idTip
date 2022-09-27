@@ -159,7 +159,15 @@ if isDragonFlight then
         local overrideSpellID = C_SpellBook.GetOverrideSpell(spellID)
 
         addLine(GameTooltip, overrideSpellID, kinds.spell)
-        addLine(GameTooltip, self:GetNodeID(), kinds.talentNode)
+        if self.GetBaseButton then
+          local baseButton = self:GetBaseButton()
+          if baseButton then
+            addLine(GameTooltip, baseButton:GetNodeID(), kinds.talentNode)
+          end
+        end
+        if self.GetNodeID then
+          addLine(GameTooltip, self:GetNodeID(), kinds.talentNode)
+        end
       end
     end
   end)
