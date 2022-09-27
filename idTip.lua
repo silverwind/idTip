@@ -146,6 +146,20 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
 end)
 
 if isDragonFlight then
+  hooksecurefunc(GameTooltip, "SetUnitBuffByAuraInstanceID", function(self, unit, auraInstanceID)
+    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+    if aura then
+      addLine(GameTooltip, aura.spellId, kinds.spell)
+    end
+  end)
+
+  hooksecurefunc(GameTooltip, "SetUnitDebuffByAuraInstanceID", function(self, unit, auraInstanceID)
+    local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
+    if aura then
+      addLine(GameTooltip, aura.spellId, kinds.spell)
+    end
+  end)
+
   hooksecurefunc(SpellButtonMixin, "OnEnter", function(self)
     local slot = SpellBook_GetSpellBookSlot(self)
     local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
