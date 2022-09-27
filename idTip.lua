@@ -158,16 +158,10 @@ if isDragonFlight then
       if spellID then
         local overrideSpellID = C_SpellBook.GetOverrideSpell(spellID)
 
-        print(self:GetNodeID())
         addLine(GameTooltip, overrideSpellID, kinds.spell)
         addLine(GameTooltip, self:GetNodeID(), kinds.talentNode)
       end
     end
-  end)
-
-  print("hooking talents")
-  hooksecurefunc(TalentButtonSelectMixin, "OnClick", function(self)
-    print(self:GetSelectedEntryID())
   end)
 else
   hooksecurefunc("SpellButton_OnEnter", function(self)
