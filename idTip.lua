@@ -146,6 +146,11 @@ GameTooltip:HookScript("OnTooltipSetSpell", function(self)
 end)
 
 if isDragonFlight then
+  hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self)
+    addLine(NamePlateTooltip, self.spellID, kinds.spell)
+    addLine(GameTooltip, self.spellID, kinds.spell)
+  end)
+
   hooksecurefunc(GameTooltip, "SetUnitBuffByAuraInstanceID", function(self, unit, auraInstanceID)
     local aura = C_UnitAuras.GetAuraDataByAuraInstanceID(unit, auraInstanceID)
     if aura then
