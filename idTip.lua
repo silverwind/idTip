@@ -217,8 +217,12 @@ end
 
 if not isClassicWow then
 	if isDragonFlight then
-		hooksecurefunc(C_TradeSkillUI, "SetTooltipRecipeResultItem", function(id)
-			addLine(GameTooltip, id, kinds.spell)
+		hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
+			addLine(self, id, kinds.spell)
+		end)
+
+		hooksecurefunc(GameTooltip, "SetRecipeResultItemForOrder", function(self, id)
+			addLine(self, id, kinds.spell)
 		end)
 	else
 		hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
@@ -513,9 +517,15 @@ if not isClassicWow then
 		addLine(self, id, kinds.currency)
 	end)
 
-	hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
-		addLine(self, id, kinds.currency)
-	end)
+	if isDragonFlight then
+		hooksecurefunc(GameTooltip, "SetCurrencyByID", function(self, id)
+			addLine(self, id, kinds.currency)
+		end)
+	else
+		hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
+			addLine(self, id, kinds.currency)
+		end)
+	end
 
 	-- Quests
 	hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
