@@ -29,6 +29,7 @@ local kinds = {
 	cgarrisontalent = "GarrisonTalentID",
 	ccovenantsanctumtree = "SanctumTalentTreeID",
 	cgarrisontalenttree = "GarrisonTalentTreeID",
+	mission = "MissionID",
 }
 
 local isClassicWow = select(4, GetBuildInfo()) < 90000
@@ -579,6 +580,13 @@ f:SetScript("OnEvent", function(_, _, what)
 		hooksecurefunc("AddAutoCombatSpellToTooltip", function(self, info)
 			if info and info.autoCombatSpellID then
 				addLine(self, info.autoCombatSpellID, kinds.ability)
+			end
+		end)
+
+		hooksecurefunc("CovenantMissionInfoTooltip_OnEnter", function(self)
+			if self.info then
+				addLine(GameTooltip, self.info.missionID, kinds.mission)
+				-- GameTooltip:Show()
 			end
 		end)
 	elseif what == "Blizzard_CovenantSanctum" then
