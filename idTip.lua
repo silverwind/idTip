@@ -263,22 +263,44 @@ if not isClassicWow then
 		end
 	end)
 end
--- NPCs
-GameTooltip:HookScript("OnTooltipSetUnit", function(self)
-	if not isClassicWow then
-		if C_PetBattles.IsInBattle() then
-			return
+
+if isDragonFlight then
+	local function onTooltipSetUnitFunction(tooltip, tooltipData)
+		print("Test")
+		if not isClassicWow then
+			if C_PetBattles.IsInBattle() then
+				return
+			end
+		end
+		local unit = select(2, tooltip:GetUnit())
+		if unit then
+			local guid = UnitGUID(unit) or ""
+			local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
+			if id and guid:match("%a+") ~= "Player" then
+				addLine(GameTooltip, id, kinds.unit)
+			end
 		end
 	end
-	local unit = select(2, self:GetUnit())
-	if unit then
-		local guid = UnitGUID(unit) or ""
-		local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
-		if id and guid:match("%a+") ~= "Player" then
-			addLine(GameTooltip, id, kinds.unit)
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Unit, onTooltipSetUnitFunction)
+else
+	-- NPCs
+	GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+		print("Hello")
+		if not isClassicWow then
+			if C_PetBattles.IsInBattle() then
+				return
+			end
 		end
-	end
-end)
+		local unit = select(2, self:GetUnit())
+		if unit then
+			local guid = UnitGUID(unit) or ""
+			local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
+			if id and guid:match("%a+") ~= "Player" then
+				addLine(GameTooltip, id, kinds.unit)
+			end
+		end
+	end)
+end
 
 -- Items
 
@@ -364,7 +386,11 @@ local function attachItemTooltip(self)
 	end
 end
 
-GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+if isDragonFlight then
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Item, attachItemTooltip)
+else
+	GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
 ItemRefTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
 ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
