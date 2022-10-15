@@ -80,9 +80,20 @@ local function addLine(tooltip, id, kind)
 			addLine(tooltip, iconId, kinds.icon)
 		end
 	elseif kind == kinds.item then
-		iconId = C_Item.GetItemIconByID(id)
-		if iconId then
-			addLine(tooltip, iconId, kinds.icon)
+		if type(id) == "table" then
+			local iconIds = {}
+			for k, v in pairs(id) do
+				iconId = C_Item.GetItemIconByID(v)
+				if iconId then
+					table.insert(iconIds, iconId)
+				end
+				addLine(tooltip, iconIds, kinds.icon)
+			end
+		else
+			iconId = C_Item.GetItemIconByID(id)
+			if iconId then
+				addLine(tooltip, iconId, kinds.icon)
+			end
 		end
 	end
 
@@ -402,88 +413,158 @@ local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, what)
 	if what == "Blizzard_AchievementUI" then
-		hooksecurefunc(AchievementTemplateMixin, "OnEnter", function(achievement)
-			GameTooltip:SetOwner(achievement, "ANCHOR_NONE")
-			GameTooltip:SetPoint("TOPLEFT", achievement, "TOPRIGHT", 0, 0)
-			addLine(GameTooltip, achievement.id, kinds.achievement)
-			GameTooltip:Show()
-		end)
+		if isDragonFlight then
+			hooksecurefunc(AchievementTemplateMixin, "OnEnter", function(achievement)
+				GameTooltip:SetOwner(achievement, "ANCHOR_NONE")
+				GameTooltip:SetPoint("TOPLEFT", achievement, "TOPRIGHT", 0, 0)
+				addLine(GameTooltip, achievement.id, kinds.achievement)
+				GameTooltip:Show()
+			end)
 
-		hooksecurefunc(AchievementTemplateMixin, "OnLeave", function()
-			GameTooltip:Hide()
-		end)
+			hooksecurefunc(AchievementTemplateMixin, "OnLeave", function()
+				GameTooltip:Hide()
+			end)
 
-		local hooked = {}
-		local function HookCriteria(criteria)
-			if not hooked[criteria] then
-				criteria:HookScript("OnEnter", function(self)
-					local button = self:GetParent() and self:GetParent():GetParent()
-					if not button then
-						return
+			local hooked = {}
+			local function HookCriteria(criteria)
+				if not hooked[criteria] then
+					criteria:HookScript("OnEnter", function(self)
+						local button = self:GetParent() and self:GetParent():GetParent()
+						if not button then
+							return
+						end
+						GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+						GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+						addLine(GameTooltip, self._aid, kinds.achievement)
+						addLine(GameTooltip, self._cid, kinds.criteria)
+						GameTooltip:Show()
+					end)
+					criteria:HookScript("OnLeave", function()
+						GameTooltip:Hide()
+					end)
+				end
+				hooked[criteria] = true
+			end
+
+			hooksecurefunc("AchievementObjectives_DisplayCriteria", function(objectivesFrame, achievementId)
+				local textStrings, progressBars, metas, criteria = 0, 0, 0
+				for criteriaIndex = 1, GetAchievementNumCriteria(achievementId) do
+					local _, criteriaType, _, _, _, _, flags, assetID, _, criteriaID =
+						GetAchievementCriteriaInfo(achievementId, criteriaIndex)
+
+					if criteriaType == CRITERIA_TYPE_ACHIEVEMENT and assetID then
+						metas = metas + 1
+						criteria = objectivesFrame:GetMeta(metas)
+					elseif bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR then
+						progressBars = progressBars + 1
+						criteria = objectivesFrame:GetProgressBar(progressBars)
+					else
+						textStrings = textStrings + 1
+						criteria = objectivesFrame:GetCriteria(textStrings)
 					end
-					GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+
+					criteria._aid = achievementId
+					criteria._cid = criteriaID
+					HookCriteria(criteria)
+				end
+			end)
+		else
+			for i, button in ipairs(AchievementFrameAchievementsContainer.buttons) do
+				button:HookScript("OnEnter", function()
+					GameTooltip:SetOwner(button, "ANCHOR_NONE")
 					GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-					addLine(GameTooltip, self._aid, kinds.achievement)
-					addLine(GameTooltip, self._cid, kinds.criteria)
+					addLine(GameTooltip, button.id, kinds.achievement)
 					GameTooltip:Show()
 				end)
-				criteria:HookScript("OnLeave", function()
+				button:HookScript("OnLeave", function()
 					GameTooltip:Hide()
 				end)
+
+				local hooked = {}
+				hooksecurefunc("AchievementButton_GetCriteria", function(index, renderOffScreen)
+					local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
+					if frame and not hooked[frame] then
+						frame:HookScript("OnEnter", function(self)
+							local button = self:GetParent() and self:GetParent():GetParent()
+							if not button or not button.id then
+								return
+							end
+							local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
+							if criteriaid then
+								GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+								GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+								addLine(GameTooltip, button.id, kinds.achievement)
+								addLine(GameTooltip, criteriaid, kinds.criteria)
+								GameTooltip:Show()
+							end
+						end)
+						frame:HookScript("OnLeave", function()
+							GameTooltip:Hide()
+						end)
+						hooked[frame] = true
+					end
+				end)
 			end
-			hooked[criteria] = true
 		end
-
-		hooksecurefunc("AchievementObjectives_DisplayCriteria", function(objectivesFrame, achievementId)
-			local textStrings, progressBars, metas, criteria = 0, 0, 0
-			for criteriaIndex = 1, GetAchievementNumCriteria(achievementId) do
-				local _, criteriaType, _, _, _, _, flags, assetID, _, criteriaID =
-					GetAchievementCriteriaInfo(achievementId, criteriaIndex)
-
-				if criteriaType == CRITERIA_TYPE_ACHIEVEMENT and assetID then
-					metas = metas + 1
-					criteria = objectivesFrame:GetMeta(metas)
-				elseif bit.band(flags, EVALUATION_TREE_FLAG_PROGRESS_BAR) == EVALUATION_TREE_FLAG_PROGRESS_BAR then
-					progressBars = progressBars + 1
-					criteria = objectivesFrame:GetProgressBar(progressBars)
-				else
-					textStrings = textStrings + 1
-					criteria = objectivesFrame:GetCriteria(textStrings)
-				end
-
-				criteria._aid = achievementId
-				criteria._cid = criteriaID
-				HookCriteria(criteria)
-			end
-		end)
 	elseif what == "Blizzard_Collections" then
-		hooksecurefunc("WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
-			local visualIDs = {}
-			local sourceIDs = {}
-			local itemIDs = {}
+		if isDragonFlight then
+			hooksecurefunc(CollectionWardrobeUtil, "SetAppearanceTooltip", function(self, sources)
+				print("Doing?")
+				local visualIDs = {}
+				local sourceIDs = {}
+				local itemIDs = {}
 
-			for i = 1, #sources do
-				if sources[i].visualID and not contains(visualIDs, sources[i].visualID) then
-					table.insert(visualIDs, sources[i].visualID)
+				for i = 1, #sources do
+					if sources[i].visualID and not contains(visualIDs, sources[i].visualID) then
+						table.insert(visualIDs, sources[i].visualID)
+					end
+					if sources[i].sourceID and not contains(visualIDs, sources[i].sourceID) then
+						table.insert(sourceIDs, sources[i].sourceID)
+					end
+					if sources[i].itemID and not contains(visualIDs, sources[i].itemID) then
+						table.insert(itemIDs, sources[i].itemID)
+					end
 				end
-				if sources[i].sourceID and not contains(visualIDs, sources[i].sourceID) then
-					table.insert(sourceIDs, sources[i].sourceID)
-				end
-				if sources[i].itemID and not contains(visualIDs, sources[i].itemID) then
-					table.insert(itemIDs, sources[i].itemID)
-				end
-			end
 
-			if #visualIDs ~= 0 then
-				addLine(GameTooltip, visualIDs, kinds.visual)
-			end
-			if #sourceIDs ~= 0 then
-				addLine(GameTooltip, sourceIDs, kinds.source)
-			end
-			if #itemIDs ~= 0 then
-				addLine(GameTooltip, itemIDs, kinds.item)
-			end
-		end)
+				if #visualIDs ~= 0 then
+					addLine(GameTooltip, visualIDs, kinds.visual)
+				end
+				if #sourceIDs ~= 0 then
+					addLine(GameTooltip, sourceIDs, kinds.source)
+				end
+				if #itemIDs ~= 0 then
+					addLine(GameTooltip, itemIDs, kinds.item)
+				end
+			end)
+		else
+			hooksecurefunc("WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
+				local visualIDs = {}
+				local sourceIDs = {}
+				local itemIDs = {}
+
+				for i = 1, #sources do
+					if sources[i].visualID and not contains(visualIDs, sources[i].visualID) then
+						table.insert(visualIDs, sources[i].visualID)
+					end
+					if sources[i].sourceID and not contains(visualIDs, sources[i].sourceID) then
+						table.insert(sourceIDs, sources[i].sourceID)
+					end
+					if sources[i].itemID and not contains(visualIDs, sources[i].itemID) then
+						table.insert(itemIDs, sources[i].itemID)
+					end
+				end
+
+				if #visualIDs ~= 0 then
+					addLine(GameTooltip, visualIDs, kinds.visual)
+				end
+				if #sourceIDs ~= 0 then
+					addLine(GameTooltip, sourceIDs, kinds.source)
+				end
+				if #itemIDs ~= 0 then
+					addLine(GameTooltip, itemIDs, kinds.item)
+				end
+			end)
+		end
 
 		-- Pet Journal selected pet info icon
 		PetJournalPetCardPetInfo:HookScript("OnEnter", function(self)
