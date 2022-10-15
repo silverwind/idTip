@@ -30,6 +30,7 @@ local kinds = {
 	ccovenantsanctumtree = "SanctumTalentTreeID",
 	cgarrisontalenttree = "GarrisonTalentTreeID",
 	mission = "MissionID",
+	guid = "GUID",
 }
 
 local isClassicWow = select(4, GetBuildInfo()) < 90000
@@ -278,7 +279,6 @@ end
 
 if isDragonFlight then
 	local function onTooltipSetUnitFunction(tooltip, tooltipData)
-		print("Test")
 		if not isClassicWow then
 			if C_PetBattles.IsInBattle() then
 				return
@@ -290,6 +290,7 @@ if isDragonFlight then
 			local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
 			if id and guid:match("%a+") ~= "Player" then
 				addLine(GameTooltip, id, kinds.unit)
+				-- addLine(GameTooltip, guid, kinds.guid)
 			end
 		end
 	end
@@ -297,7 +298,6 @@ if isDragonFlight then
 else
 	-- NPCs
 	GameTooltip:HookScript("OnTooltipSetUnit", function(self)
-		print("Hello")
 		if not isClassicWow then
 			if C_PetBattles.IsInBattle() then
 				return
@@ -510,7 +510,6 @@ f:SetScript("OnEvent", function(_, _, what)
 	elseif what == "Blizzard_Collections" then
 		if isDragonFlight then
 			hooksecurefunc(CollectionWardrobeUtil, "SetAppearanceTooltip", function(self, sources)
-				print("Doing?")
 				local visualIDs = {}
 				local sourceIDs = {}
 				local itemIDs = {}
