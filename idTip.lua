@@ -452,7 +452,11 @@ f:SetScript("OnEvent", function(_, _, what)
 			end
 
 			hooksecurefunc("AchievementObjectives_DisplayCriteria", function(objectivesFrame, achievementId)
-				local textStrings, progressBars, metas, criteria = 0, 0, 0
+				local textStrings = 0
+				local progressBars = 0
+				local metas = 0
+				local criteria = 0
+
 				for criteriaIndex = 1, GetAchievementNumCriteria(achievementId) do
 					local _, criteriaType, _, _, _, _, flags, assetID, _, criteriaID =
 						GetAchievementCriteriaInfo(achievementId, criteriaIndex)
