@@ -45,6 +45,23 @@ local function contains(table, element)
 	return false
 end
 
+local function addGeneric(tooltip, line)
+	local frame, text
+	for i = 1, 15 do
+		frame = _G[tooltip:GetName() .. "TextLeft" .. i]
+		if frame then
+			text = frame:GetText()
+		end
+		if text and string.find(text, line) then
+			return
+		end
+	end
+
+	local left = NORMAL_FONT_COLOR_CODE .. line .. FONT_COLOR_CODE_CLOSE
+
+	tooltip:AddLine(left)
+end
+
 local function addLine(tooltip, id, kind)
 	if not id or id == "" then
 		return
@@ -90,11 +107,23 @@ local function addLine(tooltip, id, kind)
 					table.insert(iconIds, iconId)
 				end
 				addLine(tooltip, iconIds, kinds.icon)
+
+				local spellname, spellId = GetItemSpell(id)
+				if spellId then
+					addGeneric(tooltip, "=== Item Spell ===")
+					addLine(tooltip, spellId, kinds.spell)
+				end
 			end
 		else
 			iconId = C_Item.GetItemIconByID(id)
 			if iconId then
 				addLine(tooltip, iconId, kinds.icon)
+
+				local spellname, spellId = GetItemSpell(id)
+				if spellId then
+					addGeneric(tooltip, "=== Item Spell ===")
+					addLine(tooltip, spellId, kinds.spell)
+				end
 			end
 		end
 	end
@@ -171,9 +200,15 @@ hooksecurefunc("SetItemRef", function(link, ...)
 end)
 
 if isDragonFlight then
-	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(self)
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(self, a)
 		local id = select(2, self:GetSpell())
 		addLine(self, id, kinds.spell)
+
+		local outputItemInfo = C_TradeSkillUI.GetRecipeOutputItemData(id, nil)
+		if outputItemInfo then
+			addGeneric(self, "== Recipe Output ==")
+			addLine(self, outputItemInfo.itemID, kinds.item)
+		end
 	end)
 else
 	GameTooltip:HookScript("OnTooltipSetSpell", function(self)
@@ -345,18 +380,16 @@ local function attachItemTooltip(self)
 		return
 	end
 
-	-- we cannot get the item link from a item guid (as far as I can tell) but we can supply the item ID regardless..
+	local link
 	if self == ShoppingTooltip1 or self == ShoppingTooltip2 then
 		if self.info and self.info.tooltipData and self.info.tooltipData.guid then
 			local guid = self.info.tooltipData.guid
-			addLine(self, C_Item.GetItemIDByGUID(guid), kinds.item)
-			return
+			link = C_Item.GetItemLinkByGUID(guid)
 		end
 	else
+		link = select(2, self:GetItem())
 	end
 
-	local link
-	link = select(2, self:GetItem())
 	if not link then
 		return
 	end
@@ -477,7 +510,10 @@ f:SetScript("OnEvent", function(_, _, what)
 			end
 
 			hooksecurefunc("AchievementObjectives_DisplayCriteria", function(objectivesFrame, achievementId)
-				local textStrings, progressBars, metas, criteria = 0, 0, 0
+				local textStrings = 0
+				local progressBars = 0
+				local metas = 0
+				local criteria = 0
 				for criteriaIndex = 1, GetAchievementNumCriteria(achievementId) do
 					local _, criteriaType, _, _, _, _, flags, assetID, _, criteriaID =
 						GetAchievementCriteriaInfo(achievementId, criteriaIndex)
@@ -637,6 +673,12 @@ f:SetScript("OnEvent", function(_, _, what)
 
 		hooksecurefunc(CovenantSanctumFrame.UpgradesTab.UniqueUpgrade, "RefreshTooltip", function(self)
 			addLine(GameTooltip, self.treeID, kinds.cgarrisontalenttree)
+		end)
+	elseif what == "Blizzard_TrainerUI" then
+		hooksecurefunc(GameTooltip, "SetTrainerService", function(self, a)
+			local serviceName, serviceType, texture, reqLevel = GetTrainerServiceInfo(a)
+			local b = C_TooltipInfo.GetTrainerService(a)
+			TooltipUtil.SurfaceArgs(b)
 		end)
 	end
 end)
