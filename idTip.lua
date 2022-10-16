@@ -334,11 +334,29 @@ if not isClassicWow then
 end
 
 local function attachItemTooltip(self)
-	if self ~= GameTooltip and self ~= ItemRefTooltip then
+	if
+		self ~= GameTooltip
+		and self ~= ItemRefTooltip
+		and self ~= ItemRefShoppingTooltip1
+		and self ~= ItemRefShoppingTooltip2
+		and self ~= ShoppingTooltip1
+		and self ~= ShoppingTooltip2
+	then
 		return
 	end
 
-	local link = select(2, self:GetItem())
+	-- we cannot get the item link from a item guid (as far as I can tell) but we can supply the item ID regardless..
+	if self == ShoppingTooltip1 or self == ShoppingTooltip2 then
+		if self.info and self.info.tooltipData and self.info.tooltipData.guid then
+			local guid = self.info.tooltipData.guid
+			addLine(self, C_Item.GetItemIDByGUID(guid), kinds.item)
+			return
+		end
+	else
+	end
+
+	local link
+	link = select(2, self:GetItem())
 	if not link then
 		return
 	end
