@@ -3,8 +3,10 @@
 ## Version: 10.1.1
 ## Notes: Adds IDs to the ingame tooltips
 ## Author: silverwind, ItsJustMeChris
+## SavedVariables: IDTIP_CONFIG
 libs/LibStub.lua
 lib/shared.lua
+lib/settings.lua
 lib/helpers.lua
 clients/shared.lua
 clients/classic.lua

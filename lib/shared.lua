@@ -73,6 +73,10 @@ function IDTipLib:addGenericLine(tooltip, line)
 end
 
 function IDTipLib:addLine(tooltip, id, kind)
+  if not IDTIP_CONFIG[IDTip.kinds_inverse[kind]] then
+    return
+  end
+
 	if not id or id == "" then
 		return
 	end
