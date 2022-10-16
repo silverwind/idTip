@@ -4,7 +4,7 @@ Adds IDs to the ingame tooltips.
 
 ![Screenshot](http://i.imgur.com/ngS3fc9.jpg)
 
-Please report any requests/bugs through an [issue]([https://github.com/itsjustmechris/idTip/issues/new](https://github.com/ItsJustMeChris/idTip-Community-Fork/issues)).
+Please report any requests/bugs through an [Issue](https://github.com/ItsJustMeChris/idTip-Community-Fork/issues)
 
 ## Downloads
 
