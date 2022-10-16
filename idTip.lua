@@ -327,6 +327,10 @@ if not isClassicWow then
 end
 
 local function attachItemTooltip(self)
+	if self ~= GameTooltip and self ~= ItemRefTooltip then
+		return
+	end
+
 	local link = select(2, self:GetItem())
 	if not link then
 		return
