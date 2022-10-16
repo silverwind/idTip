@@ -39,7 +39,7 @@ IDTip:RegisterAddonLoad("idTip", function()
 
 	local scrollChild = CreateFrame("Frame")
 	scrollFrame:SetScrollChild(scrollChild)
-	scrollChild:SetWidth(InterfaceOptionsFramePanelContainer:GetWidth() - 18)
+	scrollChild:SetWidth(idTipFrame:GetWidth() - 18)
 	scrollChild:SetHeight(1)
 
 	local TitleBar = CreateFrame("Frame", nil, idTipFrame, "BackdropTemplate")
