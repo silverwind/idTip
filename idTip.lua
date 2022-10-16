@@ -170,10 +170,17 @@ hooksecurefunc("SetItemRef", function(link, ...)
 	addLine(ItemRefTooltip, id, kinds.spell)
 end)
 
-GameTooltip:HookScript("OnTooltipSetSpell", function(self)
-	local id = select(2, self:GetSpell())
-	addLine(self, id, kinds.spell)
-end)
+if isDragonFlight then
+	TooltipDataProcessor.AddTooltipPostCall(Enum.TooltipDataType.Spell, function(self)
+		local id = select(2, self:GetSpell())
+		addLine(self, id, kinds.spell)
+	end)
+else
+	GameTooltip:HookScript("OnTooltipSetSpell", function(self)
+		local id = select(2, self:GetSpell())
+		addLine(self, id, kinds.spell)
+	end)
+end
 
 if isDragonFlight then
 	hooksecurefunc(NameplateBuffButtonTemplateMixin, "OnEnter", function(self)
@@ -452,11 +459,7 @@ f:SetScript("OnEvent", function(_, _, what)
 			end
 
 			hooksecurefunc("AchievementObjectives_DisplayCriteria", function(objectivesFrame, achievementId)
-				local textStrings = 0
-				local progressBars = 0
-				local metas = 0
-				local criteria = 0
-
+				local textStrings, progressBars, metas, criteria = 0, 0, 0
 				for criteriaIndex = 1, GetAchievementNumCriteria(achievementId) do
 					local _, criteriaType, _, _, _, _, flags, assetID, _, criteriaID =
 						GetAchievementCriteriaInfo(achievementId, criteriaIndex)
