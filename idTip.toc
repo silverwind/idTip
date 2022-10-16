@@ -2,5 +2,11 @@
 ## Title: idTip
 ## Version: 10.1.1
 ## Notes: Adds IDs to the ingame tooltips
-## Author: silverwind
-idTip.lua
+## Author: silverwind, ItsJustMeChris
+libs/LibStub.lua
+lib/shared.lua
+lib/helpers.lua
+clients/shared.lua
+clients/classic.lua
+clients/dragonflight.lua
+clients/shadowlands.lua
