@@ -28,6 +28,7 @@ local kinds = {
 }
 
 local isClassicWow = select(4,GetBuildInfo()) < 90000
+local newTooltipApi = getglobal("C_TooltipInfo") and true or false
 
 local function contains(table, element)
   for _, value in pairs(table) do
@@ -136,16 +137,20 @@ hooksecurefunc("SetItemRef", function(link, ...)
   addLine(ItemRefTooltip, id, kinds.spell)
 end)
 
-GameTooltip:HookScript("OnTooltipSetSpell", function(self)
-  local id = select(2, self:GetSpell())
-  addLine(self, id, kinds.spell)
-end)
+if newTooltipApi then
+  -- TODO
+else
+  GameTooltip:HookScript("OnTooltipSetSpell", function(self)
+    local id = select(2, self:GetSpell())
+    addLine(self, id, kinds.spell)
+  end)
 
-hooksecurefunc("SpellButton_OnEnter", function(self)
-  local slot = SpellBook_GetSpellBookSlot(self)
-  local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-  addLine(GameTooltip, spellID, kinds.spell)
-end)
+  hooksecurefunc("SpellButton_OnEnter", function(self)
+    local slot = SpellBook_GetSpellBookSlot(self)
+    local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+    addLine(GameTooltip, spellID, kinds.spell)
+  end)
+end
 
 if not isClassicWow then
   hooksecurefunc(GameTooltip, "SetRecipeResultItem", function(self, id)
@@ -185,18 +190,23 @@ if not isClassicWow then
     end
   end)
 end
+
 -- NPCs
-GameTooltip:HookScript("OnTooltipSetUnit", function(self)
-  if not isClassicWow then
-    if C_PetBattles.IsInBattle() then return end
-  end
-  local unit = select(2, self:GetUnit())
-  if unit then
-    local guid = UnitGUID(unit) or ""
-    local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
-    if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, kinds.unit) end
-  end
-end)
+if newTooltipApi then
+  -- TODO
+else
+  GameTooltip:HookScript("OnTooltipSetUnit", function(self)
+    if not isClassicWow then
+      if C_PetBattles.IsInBattle() then return end
+    end
+    local unit = select(2, self:GetUnit())
+    if unit then
+      local guid = UnitGUID(unit) or ""
+      local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
+      if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, kinds.unit) end
+    end
+  end)
+end
 
 -- Items
 
@@ -269,12 +279,16 @@ local function attachItemTooltip(self)
   end
 end
 
-GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
-ItemRefTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
-ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
-ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
-ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
-ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
+if newTooltipApi then
+  -- TODO
+else
+  GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+  ItemRefTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+  ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
+  ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
+  ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
+  ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
 
 -- Achievement Frame Tooltips
 local f = CreateFrame("frame")
@@ -384,9 +398,13 @@ if not isClassicWow then
      addLine(self, id, kinds.currency)
   end)
 
-  hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
-     addLine(self, id, kinds.currency)
-  end)
+  if newTooltipApi then
+    -- TODO
+  else
+    -- hooksecurefunc(GameTooltip, "SetCurrencyTokenByID", function(self, id)
+    --    addLine(self, id, kinds.currency)
+    -- end)
+  end
 
   -- Quests
   hooksecurefunc("QuestMapLogTitleButton_OnEnter", function(self)
