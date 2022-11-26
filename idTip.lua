@@ -22,9 +22,6 @@ local kinds = {
   icon = "IconID",
 }
 
-local isClassicWow = select(4,GetBuildInfo()) < 90000
-local newTooltipApi = C_TooltipInfo and true or false
-
 local function contains(table, element)
   for _, value in pairs(table) do
     if value == element then return true end
@@ -147,9 +144,7 @@ if SetItemRef then
   end)
 end
 
-if newTooltipApi then
-  -- TODO
-else
+if GameTooltip:HasScript("OnTooltipSetSpell") then
   GameTooltip:HookScript("OnTooltipSetSpell", function(self)
     local id = select(2, self:GetSpell())
     addLine(self, id, kinds.spell)
@@ -213,12 +208,9 @@ if GameTooltip.SetCompanionPet then
   end)
 end
 
--- NPCs
-if newTooltipApi then
-  -- TODO
-else
+if GameTooltip:HasScript("OnTooltipSetUnit") then
   GameTooltip:HookScript("OnTooltipSetUnit", function(self)
-    if not isClassicWow then
+    if C_PetBattles and C_PetBattles.IsInBattle then
       if C_PetBattles.IsInBattle() then return end
     end
     local unit = select(2, self:GetUnit())
@@ -229,8 +221,6 @@ else
     end
   end)
 end
-
--- Items
 
 if GameTooltip.SetToyByItemID then
   hooksecurefunc(GameTooltip, "SetToyByItemID", function(self, id)
@@ -270,7 +260,7 @@ local function attachItemTooltip(self)
   end
 
   local gems = {}
-  if not isClassicWow then
+  if GetItemGem then
       for i=1, 4 do
       local _,gemLink = GetItemGem(link, i)
       if gemLink then
@@ -303,14 +293,22 @@ local function attachItemTooltip(self)
   end
 end
 
-if newTooltipApi then
-  -- TODO
-else
+if GameTooltip:HasScript("OnTooltipSetSpell") then
   GameTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
+if ItemRefTooltip:HasScript("OnTooltipSetItem") then
   ItemRefTooltip:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
+if ItemRefShoppingTooltip1:HasScript("OnTooltipSetItem") then
   ItemRefShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
+if ItemRefShoppingTooltip2:HasScript("OnTooltipSetItem") then
   ItemRefShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
+if ShoppingTooltip1:HasScript("OnTooltipSetItem") then
   ShoppingTooltip1:HookScript("OnTooltipSetItem", attachItemTooltip)
+end
+if ShoppingTooltip2:HasScript("OnTooltipSetItem") then
   ShoppingTooltip2:HookScript("OnTooltipSetItem", attachItemTooltip)
 end
 
@@ -320,36 +318,44 @@ f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, what)
   if what == "Blizzard_AchievementUI" then
     for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
-      button:HookScript("OnEnter", function()
-        GameTooltip:SetOwner(button, "ANCHOR_NONE")
-        GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-        addLine(GameTooltip, button.id, kinds.achievement)
-        GameTooltip:Show()
-      end)
-      button:HookScript("OnLeave", function()
-        GameTooltip:Hide()
-      end)
+      if button:HasScript("onEnter") then
+        button:HookScript("OnEnter", function()
+          GameTooltip:SetOwner(button, "ANCHOR_NONE")
+          GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+          addLine(GameTooltip, button.id, kinds.achievement)
+          GameTooltip:Show()
+        end)
+      end
+      if button:HasScript("OnLeave") then
+        button:HookScript("OnLeave", function()
+          GameTooltip:Hide()
+        end)
+      end
 
       local hooked = {}
       if AchievementButton_GetCriteria then
         hooksecurefunc("AchievementButton_GetCriteria", function(index, renderOffScreen)
           local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
           if frame and not hooked[frame] then
-            frame:HookScript("OnEnter", function(self)
-              local button = self:GetParent() and self:GetParent():GetParent()
-              if not button or not button.id then return end
-              local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
-              if criteriaid then
-                GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
-                GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-                addLine(GameTooltip, button.id, kinds.achievement)
-                addLine(GameTooltip, criteriaid, kinds.criteria)
-                GameTooltip:Show()
-              end
-            end)
-            frame:HookScript("OnLeave", function()
-              GameTooltip:Hide()
-            end)
+            if frame:HasScript("OnEnter") then
+              frame:HookScript("OnEnter", function(self)
+                local button = self:GetParent() and self:GetParent():GetParent()
+                if not button or not button.id then return end
+                local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
+                if criteriaid then
+                  GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+                  GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+                  addLine(GameTooltip, button.id, kinds.achievement)
+                  addLine(GameTooltip, criteriaid, kinds.criteria)
+                  GameTooltip:Show()
+                end
+              end)
+            end
+            if frame:HasScript("OnLeave") then
+              frame:HookScript("OnLeave", function()
+                GameTooltip:Hide()
+              end)
+            end
             hooked[frame] = true
           end
         end)
@@ -375,14 +381,15 @@ f:SetScript("OnEvent", function(_, _, what)
     end
 
     -- Pet Journal selected pet info icon
-    PetJournalPetCardPetInfo:HookScript("OnEnter", function(self)
-      if PetJournalPetCard.speciesID then
-        local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
-        addLine(GameTooltip, PetJournalPetCard.speciesID, kinds.species);
-        addLine(GameTooltip, npcId, kinds.unit);
-      end
-    end);
-
+    if PetJournalPetCardPetInfo:HasScript("OnEnter") then
+      PetJournalPetCardPetInfo:HookScript("OnEnter", function(self)
+        if PetJournalPetCard.speciesID then
+          local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
+          addLine(GameTooltip, PetJournalPetCard.speciesID, kinds.species);
+          addLine(GameTooltip, npcId, kinds.unit);
+        end
+      end);
+    end
   elseif what == "Blizzard_GarrisonUI" then
     -- ability id
     if AddAutoCombatSpellToTooltip then
