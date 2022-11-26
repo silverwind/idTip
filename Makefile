@@ -2,34 +2,25 @@ node_modules: package.json
 	npm install --no-save
 	@touch node_modules
 
+.PHONY: zip
 zip:
-	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	rm -rf zip/idTip
-	mkdir -p zip/idTip
-	cp idTip.lua idTip.toc README.md zip/idTip
-	cd zip && zip idTip-$(VER)-retail.zip idTip/*
-	rm -rf zip/idTip
-	mkdir -p zip/idTip
-	perl -p -i -e 's|Interface: [0-9]+|Interface: 20502|g' idTip.toc
-	cp idTip.lua idTip.toc README.md zip/idTip
-	cd zip && zip idTip-$(VER)-classic.zip idTip/*
-	perl -p -i -e 's|Interface: [0-9]+|Interface: 90105|g' idTip.toc
-	rm -rf zip/idTip
+	rm -rf idTip
+	mkdir -p idTip
+	cp idTip.lua idTip.toc idTip
+	zip idTip-$(shell git describe --abbrev=0).zip idTip
+	rm -rf idTip
 
+.PHONY: patch
 patch: node_modules
-	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	npx versions -b $(VER) -P patch idTip.toc
+	npx versions patch idTip.toc
 	$(MAKE) zip
 
+.PHONY: minor
 minor: node_modules
-	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	npx versions -b $(VER) -P minor idTip.toc
+	npx versions minor idTip.toc
 	$(MAKE) zip
 
+.PHONY: major
 major: node_modules
-	$(eval VER := $(shell grep Version idTip.toc 2>/dev/null | cut -c 13-))
-	npx versions -b $(VER) -P major idTip.toc
+	npx versions major idTip.toc
 	$(MAKE) zip
-
-.PHONY: zip patch minor major
-
