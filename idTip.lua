@@ -1,3 +1,8 @@
+local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
+      GetGlyphSocketInfo, tonumber, strfind, _G
+    = hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
+      GetGlyphSocketInfo, tonumber, strfind, _G
+
 local kinds = {
   spell = "SpellID",
   item = "ItemID",
