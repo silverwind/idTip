@@ -36,13 +36,7 @@ end
 
 local function hook(table, fn, cb)
   if table and table[fn] then
-    hooksecurefunc(table[fn], cb)
-  end
-end
-
-local function hookFn(fn, cb)
-  if _G[fn] then
-    hooksecurefunc(_G[fn], cb)
+    hooksecurefunc(table, fn, cb)
   end
 end
 
@@ -144,7 +138,7 @@ hook(GameTooltip, "SetSpellByID", function(self, id)
   addLineByKind(self, id, kinds.spell)
 end)
 
-hookFn("SetItemRef", function(link, ...)
+hook(_G, "SetItemRef", function(link, ...)
   local id = tonumber(link:match("spell:(%d+)"))
   addLine(ItemRefTooltip, id, kinds.spell)
 end)
@@ -154,7 +148,7 @@ hookScript(GameTooltip, "OnTooltipSetSpell", function(self)
   addLine(self, id, kinds.spell)
 end)
 
-hookFn("SpellButton_OnEnter", function(self)
+hook(_G, "SpellButton_OnEnter", function(self)
   local slot = SpellBook_GetSpellBookSlot(self)
   local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
   addLine(GameTooltip, spellID, kinds.spell)
@@ -299,7 +293,7 @@ f:SetScript("OnEvent", function(_, _, what)
       end)
 
       local hooked = {}
-      hookFn("AchievementButton_GetCriteria", function(index, renderOffScreen)
+      hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
         local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
         if frame and not hooked[frame] then
           hookScript(frame, "OnEnter", function(self)
@@ -322,7 +316,7 @@ f:SetScript("OnEvent", function(_, _, what)
       end)
     end
   elseif what == "Blizzard_Collections" then
-    hookFn("WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
+    hook(_G, "WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
       local visualIDs = {}
       local sourceIDs = {}
       local itemIDs = {}
@@ -348,7 +342,7 @@ f:SetScript("OnEvent", function(_, _, what)
     end);
   elseif what == "Blizzard_GarrisonUI" then
     -- ability id
-    hookFn("AddAutoCombatSpellToTooltip", function (self, info)
+    hook(_G, "AddAutoCombatSpellToTooltip", function (self, info)
       if info and info.autoCombatSpellID then
         addLine(self, info.autoCombatSpellID, kinds.ability)
       end
@@ -356,7 +350,7 @@ f:SetScript("OnEvent", function(_, _, what)
   end
 end)
 
-hookFn("PetBattleAbilityButton_OnEnter", function(self)
+hook(_G, "PetBattleAbilityButton_OnEnter", function(self)
   local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
   if self:GetEffectiveAlpha() > 0 then
     local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, self:GetID()))
@@ -367,7 +361,7 @@ hookFn("PetBattleAbilityButton_OnEnter", function(self)
   end
 end)
 
-hookFn("PetBattleAura_OnEnter", function(self)
+hook(_G, "PetBattleAura_OnEnter", function(self)
   local parent = self:GetParent()
   local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, self.auraIndex))
   if id then
@@ -389,11 +383,11 @@ hook(GameTooltip, "SetCurrencyTokenByID", function(self, id)
   addLine(self, id, kinds.currency)
 end)
 
-hookFn("QuestMapLogTitleButton_OnEnter", function(self)
+hook(_G, "QuestMapLogTitleButton_OnEnter", function(self)
   local id = C_QuestLog.GetQuestIDForLogIndex(self.questLogIndex)
   addLine(GameTooltip, id, kinds.quest)
 end)
 
-hookFn("TaskPOI_OnEnter", function(self)
+hook(_G, "TaskPOI_OnEnter", function(self)
   if self and self.questID then addLine(GameTooltip, self.questID, kinds.quest) end
 end)
