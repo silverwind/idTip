@@ -1,5 +1,7 @@
 ignore:
+  - LICENSE
   - Makefile
   - package-lock.json
   - package.json
+  - pkgmeta.yaml
   - README.md
