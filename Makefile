@@ -13,14 +13,11 @@ zip:
 .PHONY: patch
 patch: node_modules
 	npx versions patch idTip.toc
-	$(MAKE) zip
 
 .PHONY: minor
 minor: node_modules
 	npx versions minor idTip.toc
-	$(MAKE) zip
 
 .PHONY: major
 major: node_modules
 	npx versions major idTip.toc
-	$(MAKE) zip
