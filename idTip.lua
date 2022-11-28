@@ -281,39 +281,41 @@ local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, what)
   if what == "Blizzard_AchievementUI" then
-    for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
-      hookScript(button, "OnEnter", function()
-        GameTooltip:SetOwner(button, "ANCHOR_NONE")
-        GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-        addLine(GameTooltip, button.id, kinds.achievement)
-        GameTooltip:Show()
-      end)
-      hookScript(button, "OnLeave", function()
-        GameTooltip:Hide()
-      end)
+    if AchievementFrameAchievementsContainer then
+      for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
+        hookScript(button, "OnEnter", function()
+          GameTooltip:SetOwner(button, "ANCHOR_NONE")
+          GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+          addLine(GameTooltip, button.id, kinds.achievement)
+          GameTooltip:Show()
+        end)
+        hookScript(button, "OnLeave", function()
+          GameTooltip:Hide()
+        end)
 
-      local hooked = {}
-      hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
-        local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
-        if frame and not hooked[frame] then
-          hookScript(frame, "OnEnter", function(self)
-            local button = self:GetParent() and self:GetParent():GetParent()
-            if not button or not button.id then return end
-            local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
-            if criteriaid then
-              GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
-              GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-              addLine(GameTooltip, button.id, kinds.achievement)
-              addLine(GameTooltip, criteriaid, kinds.criteria)
-              GameTooltip:Show()
-            end
-          end)
-          hookScript(frame, "OnLeave", function()
-            GameTooltip:Hide()
-          end)
-          hooked[frame] = true
-        end
-      end)
+        local hooked = {}
+        hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
+          local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
+          if frame and not hooked[frame] then
+            hookScript(frame, "OnEnter", function(self)
+              local button = self:GetParent() and self:GetParent():GetParent()
+              if not button or not button.id then return end
+              local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
+              if criteriaid then
+                GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+                GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+                addLine(GameTooltip, button.id, kinds.achievement)
+                addLine(GameTooltip, criteriaid, kinds.criteria)
+                GameTooltip:Show()
+              end
+            end)
+            hookScript(frame, "OnLeave", function()
+              GameTooltip:Hide()
+            end)
+            hooked[frame] = true
+          end
+        end)
+      end
     end
   elseif what == "Blizzard_Collections" then
     hook(_G, "WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
