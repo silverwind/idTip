@@ -107,6 +107,52 @@ local function addLineByKind(self, id, kind)
   end
 end
 
+local function addFromData(tooltip, data, kind)
+  for _, val in ipairs(data.args) do
+    if kind == kinds.unit and val.guidVal then
+      local id = tonumber(val.guidVal:match("-(%d+)-%x+$"), 10)
+      if id and val.guidVal:match("%a+") ~= "Player" then addLine(tooltip, id, kind) end
+    else
+      if val.field == "id" and val.intVal then
+        addLine(tooltip, val.intVal, kind)
+      end
+    end
+  end
+end
+
+-- https://github.com/Ketho/wow-ui-source-df/blob/e6d3542fc217592e6144f5934bf22c5d599c1f6c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
+if TooltipDataProcessor then
+  TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
+    if data.type == Enum.TooltipDataType.Spell then
+      addFromData(tooltip, data, kinds.spell)
+    elseif data.type == Enum.TooltipDataType.Item then
+      addFromData(tooltip, data, kinds.item)
+    elseif data.type == Enum.TooltipDataType.Unit then
+      addFromData(tooltip, data, kinds.unit)
+    elseif data.type == Enum.TooltipDataType.Currency then
+      addFromData(tooltip, data, kinds.currency)
+    elseif data.type == Enum.TooltipDataType.UnitAura then
+      addFromData(tooltip, data, kinds.spell)
+    elseif data.type == Enum.TooltipDataType.Mount then
+      addFromData(tooltip, data, kinds.mount)
+    elseif data.type == Enum.TooltipDataType.Achievement then
+      addFromData(tooltip, data, kinds.achievement)
+    elseif data.type == Enum.TooltipDataType.EquipmentSet then
+      addFromData(tooltip, data, kinds.equipmentset)
+    elseif data.type == Enum.TooltipDataType.RecipeRankInfo then
+      addFromData(tooltip, data, kinds.spell)
+    elseif data.type == Enum.TooltipDataType.Totem then
+      addFromData(tooltip, data, kinds.spell)
+    elseif data.type == Enum.TooltipDataType.Toy then
+      addFromData(tooltip, data, kinds.item)
+    elseif data.type == Enum.TooltipDataType.Quest then
+      addFromData(tooltip, data, kinds.quest)
+    elseif data.type == Enum.TooltipDataType.Macro then
+      addFromData(tooltip, data, kinds.macro)
+    end
+  end)
+end
+
 local function onSetHyperlink(self, link)
   local kind, id = string.match(link,"^(%a+):(%d+)")
   addLineByKind(self, id, kind)
