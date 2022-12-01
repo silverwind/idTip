@@ -47,13 +47,14 @@ local function hookScript(table, fn, cb)
 end
 
 local function addLine(tooltip, id, kind)
-  if not id or id == "" then return end
+  if not id or id == "" or not tooltip or not tooltip.GetName then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Check if we already added to this tooltip. Happens on the talent frame
   local frame, text
+  local name = tooltip:GetName()
   for i = 1,15 do
-    frame = _G[tooltip:GetName() .. "TextLeft" .. i]
+    frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
     if text and string.find(text, kind) then return end
   end
