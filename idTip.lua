@@ -123,6 +123,7 @@ end
 -- https://github.com/Ketho/wow-ui-source-df/blob/e6d3542fc217592e6144f5934bf22c5d599c1f6c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
+    if not data or not data.type then return end
     if data.type == Enum.TooltipDataType.Spell then
       addFromData(tooltip, data, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Item then
