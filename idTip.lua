@@ -53,6 +53,7 @@ local function addLine(tooltip, id, kind)
   -- Check if we already added to this tooltip. Happens on the talent frame
   local frame, text
   local name = tooltip:GetName()
+  if not name then return end
   for i = 1,15 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
