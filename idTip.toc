@@ -1,4 +1,7 @@
 ## Interface: 100002
+## Interface-Classic: 11403
+## Interface-BCC: 20504
+## Interface-Wrath: 30400
 ## Title: idTip
 ## Version: 10.3.2
 ## Notes: Adds various IDs to tooltips

@@ -1,3 +1,4 @@
+enable-toc-creation: yes
 ignore:
   - LICENSE
   - Makefile
