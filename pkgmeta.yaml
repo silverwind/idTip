@@ -1,5 +1,7 @@
 enable-toc-creation: yes
+manual-changelog: CHANGELOG.txt
 ignore:
+  - CHANGELOG.txt
   - LICENSE
   - Makefile
   - package-lock.json

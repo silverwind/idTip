@@ -2,6 +2,10 @@ node_modules: package.json
 	npm install --no-save
 	@touch node_modules
 
+.PHONY: changelog
+changelog:
+	@git log -1 --pretty=%B
+
 .PHONY: zip
 zip:
 	rm -rf idTip
