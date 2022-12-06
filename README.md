@@ -6,7 +6,8 @@ Adds IDs to the ingame tooltips.
 
 Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new).
 
-## Downloads
+## Installation
 
-- [Addon Site on Curse](https://wow.curseforge.com/projects/idtip)
-- [Addon Site on WoWInterface](https://www.wowinterface.com/downloads/fileinfo.php?id=17033)
+- Directly from GitHub with [WowUp](https://github.com/WowUp/WowUp)
+- From [WoWInterface](https://www.wowinterface.com/downloads/fileinfo.php?id=17033)
+- From [Curse](https://wow.curseforge.com/projects/idtip)
