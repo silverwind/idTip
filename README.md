@@ -8,6 +8,6 @@ Please report any requests/bugs through an [issue](https://github.com/silverwind
 
 ## Installation
 
-- Directly from GitHub with [WowUp](https://github.com/WowUp/WowUp)
+- From [GitHub](https://github.com/silverwind/idTip) with [WowUp](https://github.com/WowUp/WowUp)
 - From [WoWInterface](https://www.wowinterface.com/downloads/fileinfo.php?id=17033)
 - From [Curse](https://wow.curseforge.com/projects/idtip)
