@@ -1,10 +1,8 @@
 # idTip
 
-Adds IDs to the ingame tooltips.
+Adds various IDs to the WoW ingame tooltips.
 
 ![Screenshot](http://i.imgur.com/ngS3fc9.jpg)
-
-Please report any requests/bugs through an [issue](https://github.com/silverwind/idTip/issues/new).
 
 ## Installation
 
