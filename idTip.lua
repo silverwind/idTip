@@ -162,6 +162,7 @@ local function onSetHyperlink(self, link)
 end
 
 hook(GameTooltip, "SetAction", function(self, slot)
+  if not GetActionInfo then return end
   local kind, id = GetActionInfo(slot)
   addLineByKind(self, id, kind)
 end)
@@ -169,16 +170,19 @@ end)
 hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetUnitBuff", function(self, ...)
+   if not UnitBuff then return end
   local id = select(10, UnitBuff(...))
   addLine(self, id, kinds.spell)
 end)
 
 hook(GameTooltip, "SetUnitDebuff", function(self, ...)
+  if not UnitDebuff then return end
   local id = select(10, UnitDebuff(...))
   addLine(self, id, kinds.spell)
 end)
 
 hook(GameTooltip, "SetUnitAura", function(self, ...)
+  if not UnitAura then return end
   local id = select(10, UnitAura(...))
   addLine(self, id, kinds.spell)
 end)
@@ -198,6 +202,7 @@ hookScript(GameTooltip, "OnTooltipSetSpell", function(self)
 end)
 
 hook(_G, "SpellButton_OnEnter", function(self)
+  if not SpellBook_GetSpellBookSlot then return end
   local slot = SpellBook_GetSpellBookSlot(self)
   local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
   addLine(GameTooltip, spellID, kinds.spell)
@@ -212,18 +217,21 @@ hook(GameTooltip, "SetRecipeRankInfo", function(self, id)
 end)
 
 hook(GameTooltip, "SetArtifactPowerByID", function(self, powerID)
+  if not C_ArtifactUI or not C_ArtifactUI.GetPowerInfo then return end
   local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
   addLine(self, powerID, kinds.artifactpower)
   addLine(self, powerInfo.spellID, kinds.spell)
 end)
 
 hook(GameTooltip, "SetTalent", function(self, id)
+  if not GetTalentInfoByID then return end
   local spellID = select(6, GetTalentInfoByID(id))
   addLine(self, id, kinds.talent)
   addLine(self, spellID, kinds.spell)
 end)
 
 hook(GameTooltip, "SetPvpTalent", function(self, id)
+  if not GetPvpTalentInfoByID then return end
   local spellID = select(6, GetPvpTalentInfoByID(id))
   addLine(self, id, kinds.talent)
   addLine(self, spellID, kinds.spell)
@@ -231,6 +239,7 @@ end)
 
 -- Pet Journal team icon
 hook(GameTooltip, "SetCompanionPet", function(self, petID)
+  if not C_PetJournal or not C_PetJournal.GetPetInfoByPetID then return end
   local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
   if speciesID then
     local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesID));
@@ -385,6 +394,7 @@ f:SetScript("OnEvent", function(_, _, what)
 
     -- Pet Journal selected pet info icon
     hookScript(PetJournalPetCardPetInfo, "OnEnter", function(self)
+      if not C_PetJournal or not C_PetBattles.GetPetInfoBySpeciesID then return end
       if PetJournalPetCard.speciesID then
         local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
         addLine(GameTooltip, PetJournalPetCard.speciesID, kinds.species);
@@ -402,6 +412,8 @@ f:SetScript("OnEvent", function(_, _, what)
 end)
 
 hook(_G, "PetBattleAbilityButton_OnEnter", function(self)
+  if not C_PetBattles or not C_PetBattles.GetActivePet then return end
+  if not C_PetBattles or not C_PetBattles.GetAbilityInfo then return end
   local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
   if self:GetEffectiveAlpha() > 0 then
     local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, self:GetID()))
@@ -413,6 +425,7 @@ hook(_G, "PetBattleAbilityButton_OnEnter", function(self)
 end)
 
 hook(_G, "PetBattleAura_OnEnter", function(self)
+  if not C_PetBattles or not C_PetBattles.GetAuraInfo then return end
   local parent = self:GetParent()
   local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, self.auraIndex))
   if id then
@@ -422,6 +435,7 @@ hook(_G, "PetBattleAura_OnEnter", function(self)
 end)
 
 hook(GameTooltip, "SetCurrencyToken", function(self, index)
+  if not C_CurrencyInfo or not C_CurrencyInfo.GetCurrencyListLink then return end
   local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
   addLine(self, id, kinds.currency)
 end)
