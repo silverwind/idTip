@@ -170,7 +170,7 @@ end)
 hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetUnitBuff", function(self, ...)
-   if not UnitBuff then return end
+  if not UnitBuff then return end
   local id = select(10, UnitBuff(...))
   addLine(self, id, kinds.spell)
 end)
@@ -249,9 +249,8 @@ hook(GameTooltip, "SetCompanionPet", function(self, petID)
 end)
 
 hookScript(GameTooltip, "OnTooltipSetUnit", function(self)
-  if C_PetBattles and C_PetBattles.IsInBattle then
-    if C_PetBattles.IsInBattle() then return end
-  end
+  if not C_PetBattles or not C_PetBattles.IsInBattle then return end
+  if C_PetBattles.IsInBattle() then return end
   local unit = select(2, self:GetUnit())
   if unit then
     local guid = UnitGUID(unit) or ""
