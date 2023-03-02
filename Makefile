@@ -4,7 +4,7 @@ node_modules: package.json
 
 .PHONY: changelog
 changelog:
-	@git log -1 --pretty=%B
+	@git log -1 --pretty=%B | head -c -1
 
 .PHONY: zip
 zip:
