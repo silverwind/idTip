@@ -113,7 +113,7 @@ local function addFromData(tooltip, data, kind)
   if kind == kinds.unit and data.guid then
     local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
     if id and data.guid:match("%a+") ~= "Player" then addLine(tooltip, id, kind) end
-  else if data.id then
+  elseif data.id then
     addLine(tooltip, data.id, kind)
   end
 end
