@@ -116,6 +116,7 @@ local function addFromData(tooltip, data, kind)
   else if data.id then
     addLine(tooltip, data.id, kind)
   end
+  end
 end
 
 -- https://github.com/Ketho/wow-ui-source-df/blob/e6d3542fc217592e6144f5934bf22c5d599c1f6c/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
