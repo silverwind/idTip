@@ -110,15 +110,11 @@ local function addLineByKind(self, id, kind)
 end
 
 local function addFromData(tooltip, data, kind)
-  for _, val in ipairs(data.args) do
-    if kind == kinds.unit and val.guidVal then
-      local id = tonumber(val.guidVal:match("-(%d+)-%x+$"), 10)
-      if id and val.guidVal:match("%a+") ~= "Player" then addLine(tooltip, id, kind) end
-    else
-      if val.field == "id" and val.intVal then
-        addLine(tooltip, val.intVal, kind)
-      end
-    end
+  if kind == kinds.unit and data.guid then
+    local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+    if id and data.guid:match("%a+") ~= "Player" then addLine(tooltip, id, kind) end
+  else if data.id then
+    addLine(tooltip, data.id, kind)
   end
 end
 
