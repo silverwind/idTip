@@ -46,14 +46,20 @@ local function hookScript(table, fn, cb)
   end
 end
 
+function getTooltipName(tooltip)
+  return tooltip:GetName() or nil
+end
+
 local function addLine(tooltip, id, kind)
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
+  -- Abort when tooltip has no name or when :GetName throws
+  local ok, name = pcall(getTooltipName, tooltip)
+  if not ok or not name then return end
+
   -- Check if we already added to this tooltip. Happens on the talent frame
   local frame, text
-  local name = tooltip:GetName()
-  if not name then return end
   for i = 1,15 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
