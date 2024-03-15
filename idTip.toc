@@ -5,7 +5,7 @@
 ## Interface-BCC: 20504
 ## Interface-Classic: 11501
 ## Title: idTip
-## Version: 10.5.7
+## Version: 10.6.0
 ## Notes: Adds various IDs to tooltips
 ## Author: silverwind
 ## X-Curse-Project-ID: 24541
