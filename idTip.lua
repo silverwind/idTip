@@ -251,8 +251,7 @@ hook(GameTooltip, "SetCompanionPet", function(self, petID)
 end)
 
 hookScript(GameTooltip, "OnTooltipSetUnit", function(self)
-  if not C_PetBattles or not C_PetBattles.IsInBattle then return end
-  if C_PetBattles.IsInBattle() then return end
+  if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
   local unit = select(2, self:GetUnit())
   if unit then
     local guid = UnitGUID(unit) or ""
