@@ -25,6 +25,7 @@ local kinds = {
   source = "SourceID",
   species = "SpeciesID",
   icon = "IconID",
+  mission = "MissionID",
 }
 
 local function contains(table, element)
@@ -406,6 +407,14 @@ f:SetScript("OnEvent", function(_, _, what)
     hook(_G, "AddAutoCombatSpellToTooltip", function (self, info)
       if info and info.autoCombatSpellID then
         addLine(self, info.autoCombatSpellID, kinds.ability)
+      end
+    end)
+
+    -- mission id (it's work without VenturePlan)
+    hooksecurefunc("CovenantMissionInfoTooltip_OnEnter", function(self)
+      if self.info then
+        addLine(GameTooltip, self.info.missionID, kinds.mission)
+        GameTooltip:Show()
       end
     end)
   end
