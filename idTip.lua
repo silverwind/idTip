@@ -449,6 +449,7 @@ hook(GameTooltip, "SetCurrencyTokenByID", function(self, id)
 end)
 
 hook(_G, "QuestMapLogTitleButton_OnEnter", function(self)
+  if not C_QuestLog or not C_QuestLog.GetQuestIDForLogIndex then return end
   local id = C_QuestLog.GetQuestIDForLogIndex(self.questLogIndex)
   addLine(GameTooltip, id, kinds.quest)
 end)
