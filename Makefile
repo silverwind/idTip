@@ -2,6 +2,10 @@ node_modules: package.json
 	npm install --no-save
 	@touch node_modules
 
+.PHONY: test
+test: node_modules
+	npx vitest
+
 .PHONY: changelog
 changelog:
 	@git log -1 --pretty=%B | head -c -1
