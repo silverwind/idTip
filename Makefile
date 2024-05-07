@@ -8,7 +8,7 @@ test: node_modules
 
 .PHONY: changelog
 changelog:
-	@git log -1 --pretty=%B | head -c -1
+	@git log -1 --pretty=%B | tail -n +3 | head -c -1
 
 .PHONY: zip
 zip:
