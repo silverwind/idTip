@@ -18,6 +18,13 @@ zip:
 	zip idTip-$(shell git describe --abbrev=0).zip idTip
 	rm -rf idTip
 
+.PHONY: update
+update: node_modules
+	npx updates -cu
+	rm -rf node_modules package-lock.json
+	npm install
+	@touch node_modules
+
 .PHONY: patch
 patch: node_modules
 	npx versions patch idTip.toc
