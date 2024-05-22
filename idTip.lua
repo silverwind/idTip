@@ -25,6 +25,8 @@ local kinds = {
   source = "SourceID",
   species = "SpeciesID",
   icon = "IconID",
+  areapoi = "AreaPoiID",
+  vignette = "VignetteID",
 }
 
 local function contains(table, element)
@@ -456,4 +458,14 @@ end)
 
 hook(_G, "TaskPOI_OnEnter", function(self)
   if self and self.questID then addLine(GameTooltip, self.questID, kinds.quest) end
+end)
+
+-- AreaPois (on the world map)
+hook(AreaPOIPinMixin, "TryShowTooltip", function(self)
+  if self and self.areaPoiID then addLine(GameTooltip, self.areaPoiID, kinds.areapoi) end
+end)
+
+-- Vignettes (on the world map)
+hook(VignettePinMixin, "OnMouseEnter", function(self)
+  if self and self.vignetteInfo and self.vignetteInfo.vignetteID then addLine(GameTooltip, self.vignetteInfo.vignetteID, kinds.vignette) end
 end)
