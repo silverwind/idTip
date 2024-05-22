@@ -339,37 +339,62 @@ local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, what)
   if what == "Blizzard_AchievementUI" then
-    if AchievementFrameAchievementsContainer then
-      for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
-        hookScript(button, "OnEnter", function()
-          GameTooltip:SetOwner(button, "ANCHOR_NONE")
+    -- common functions between branches
+    local achievement_enter = function(button)
+      GameTooltip:SetOwner(button, "ANCHOR_NONE")
+      GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+      addLine(GameTooltip, button.id, kinds.achievement)
+      GameTooltip:Show()
+    end
+    local criteria_enter = function(index)
+      return function(self)
+        local button = self:GetParent() and self:GetParent():GetParent()
+        if not button or not button.id then return end
+        local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, self.___index or index))
+        if criteriaid then
+          if not GameTooltip:IsVisible() then
+            GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
+          end
           GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
           addLine(GameTooltip, button.id, kinds.achievement)
+          addLine(GameTooltip, criteriaid, kinds.criteria)
           GameTooltip:Show()
-        end)
-        hookScript(button, "OnLeave", function()
-          GameTooltip:Hide()
-        end)
+        end
+      end
+    end
+    if AchievementTemplateMixin then
+      -- dragonflight
+      hook(AchievementTemplateMixin, "OnEnter", achievement_enter)
+      hook(AchievementTemplateMixin, "OnLeave", GameTooltip_Hide)
+
+      local hooked = {}
+      local getter = function(pool)
+        return function(self, index)
+          local frame = self[pool][index]
+          frame.___index = index
+          if frame and not hooked[frame] then
+            hookScript(frame, "OnEnter", criteria_enter(index))
+            hookScript(frame, "OnLeave", GameTooltip_Hide)
+            hooked[frame] = true
+          end
+        end
+      end
+      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetCriteria", getter("criterias"))
+      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetMiniAchievement", getter("miniAchivements"))
+      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetMeta", getter("metas"))
+      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetProgressBar", getter("progressBars"))
+    elseif AchievementFrameAchievementsContainer then
+      -- pre-dragonflight
+      for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
+        hookScript(button, "OnEnter", achievement_enter)
+        hookScript(button, "OnLeave", GameTooltip_Hide)
 
         local hooked = {}
         hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
           local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
           if frame and not hooked[frame] then
-            hookScript(frame, "OnEnter", function(self)
-              local button = self:GetParent() and self:GetParent():GetParent()
-              if not button or not button.id then return end
-              local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, index))
-              if criteriaid then
-                GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
-                GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-                addLine(GameTooltip, button.id, kinds.achievement)
-                addLine(GameTooltip, criteriaid, kinds.criteria)
-                GameTooltip:Show()
-              end
-            end)
-            hookScript(frame, "OnLeave", function()
-              GameTooltip:Hide()
-            end)
+            hookScript(frame, "OnEnter", criteria_enter(index))
+            hookScript(frame, "OnLeave", GameTooltip_Hide)
             hooked[frame] = true
           end
         end)
