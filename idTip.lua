@@ -1,7 +1,9 @@
 local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
-      GetGlyphSocketInfo, tonumber, strfind, _G
+      GetGlyphSocketInfo, tonumber, strfind, _G,
+      GetSpellTexture
     = hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
-      GetGlyphSocketInfo, tonumber, strfind, _G
+      GetGlyphSocketInfo, tonumber, strfind, _G,
+      C_Spell and C_Spell.GetSpellTexture or GetSpellTexture
 
 local kinds = {
   spell = "SpellID",
@@ -80,7 +82,7 @@ local function addLine(tooltip, id, kind)
   tooltip:AddDoubleLine(left, right)
 
   if kind == kinds.spell then
-    iconId = select(3, GetSpellInfo(id))
+    iconId = GetSpellTexture(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
   elseif kind == kinds.item then
     iconId = C_Item.GetItemIconByID(id)
