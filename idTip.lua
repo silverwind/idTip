@@ -79,6 +79,7 @@ local function addLine(tooltip, id, kind)
 
   tooltip:AddDoubleLine(left, right)
 
+  local iconId
   if kind == kinds.spell then
     if C_Spell and C_Spell.GetSpellTexture then
       iconId = C_Spell.GetSpellTexture(id)
