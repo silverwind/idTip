@@ -36,3 +36,8 @@ minor: node_modules
 .PHONY: major
 major: node_modules
 	npx versions major idTip.toc
+
+.PHONY: chmod
+chmod:
+	@find . -type d -exec chmod 0755 {} \;
+	@find . -type f -exec chmod 0644 {} \;
