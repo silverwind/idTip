@@ -1,9 +1,4 @@
-## Interface: 100206
-## Interface-Mainline: 100206
-## Interface-Cata: 40400
-## Interface-Wrath: 30403
-## Interface-BCC: 20504
-## Interface-Classic: 11502
+## Interface: 11502, 20504, 30403, 40400, 100206, 100207, 110000
 ## Title: idTip
 ## Version: 10.6.3
 ## Notes: Adds various IDs to tooltips
