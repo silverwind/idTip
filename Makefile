@@ -39,5 +39,5 @@ major: node_modules
 
 .PHONY: chmod
 chmod:
-	@find . -type d -exec chmod 0755 {} \;
-	@find . -type f -exec chmod 0644 {} \;
+	@find . -type d -depth 1 -exec chmod 0755 {} \;
+	@find . -type f -depth 1 -exec chmod 0644 {} \;
