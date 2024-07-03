@@ -202,6 +202,8 @@ if TooltipDataProcessor then
     elseif data.type == Enum.TooltipDataType.Item then
       -- pass items through attachItemTooltip to possibly extract more info besides ItemID
       if (data.id) then
+        -- possibly blizzard bug: these links do not contain any GemID or BonusID
+        -- https://github.com/silverwind/idTip/issues/111#issuecomment-2207218825
         local link = select(2, GetItemInfo(data.id));
         if link then
           attachItemTooltip(tooltip, link)
