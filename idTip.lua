@@ -3,6 +3,12 @@ local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
     = hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
       GetGlyphSocketInfo, tonumber, strfind, _G
 
+local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
+local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
+local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
+local GetItemGem = (C_Item and C_Item.GetItemGem) and C_Item.GetItemGem or GetItemGem
+local GetRecipeReagentItemLink = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink) and C_TradeSkillUI.GetRecipeReagentItemLink or GetTradeSkillReagentItemLink
+
 local kinds = {
   spell = "SpellID",
   item = "ItemID",
@@ -10,7 +16,7 @@ local kinds = {
   quest = "QuestID",
   talent = "TalentID",
   achievement = "AchievementID",
-  criteria = "CriteriaID",
+  criteria = "criteriaId",
   ability = "AbilityID",
   currency = "CurrencyID",
   artifactpower = "ArtifactPowerID",
@@ -62,7 +68,7 @@ local function addLine(tooltip, id, kind)
 
   -- Check if we already added to this tooltip. Happens on the talent frame
   local frame, text
-  for i = 1,15 do
+  for i = 1, 32 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
     if text and string.find(text, kind) then return end
@@ -81,14 +87,10 @@ local function addLine(tooltip, id, kind)
 
   local iconId
   if kind == kinds.spell then
-    if C_Spell and C_Spell.GetSpellTexture then
-      iconId = C_Spell.GetSpellTexture(id)
-    else
-      iconId = GetSpellTexture(id)
-    end
+    iconId = GetSpellTexture(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
   elseif kind == kinds.item then
-    iconId = C_Item.GetItemIconByID(id)
+    iconId = GetItemIconByID(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
   end
 
@@ -131,6 +133,66 @@ local function addFromData(tooltip, data, kind)
   end
 end
 
+local function attachItemTooltip(tooltip, link)
+  if not link then return end
+
+  local itemString = string.match(link, "item:([%-?%d:]+)")
+  if not itemString then return end
+
+  local enchantid = ""
+  local bonusid = ""
+  local gemid = ""
+  local bonuses = {}
+  local itemSplit = {}
+
+  for v in string.gmatch(itemString, "(%d*:?)") do
+    if v == ":" then
+      itemSplit[#itemSplit + 1] = 0
+    else
+      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
+    end
+  end
+
+  for index = 1, tonumber(itemSplit[13]) do
+    bonuses[#bonuses + 1] = itemSplit[13 + index]
+  end
+
+  local gems = {}
+  if GetItemGem then
+    for i = 1, 4 do
+      local gemLink = select(2, GetItemGem(link, i))
+      if gemLink then
+        local gemDetail = string.match(gemLink, "item[%-?%d:]+")
+        gems[#gems + 1] = string.match(gemDetail, "item:(%d+):")
+      elseif flags == 256 then
+        gems[#gems + 1] = "0"
+      end
+    end
+  end
+
+  -- TODO: GetMouseFocus is replaced with GetMouseFoci in TWW
+  local id = string.match(link, "item:(%d*)")
+  if (id == "" or id == "0") and TradeSkillFrame and TradeSkillFrame.RecipeList and TradeSkillFrame:IsVisible() and GetRecipeReagentItemLink and GetMouseFocus and GetMouseFocus().reagentIndex then
+    local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
+    for i = 1, 8 do
+      if GetMouseFocus().reagentIndex == i then
+        id = GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
+        break
+      end
+    end
+  end
+
+  if id then
+    addLine(tooltip, id, kinds.item)
+    if itemSplit[2] ~= 0 then
+      enchantid = itemSplit[2]
+      addLine(tooltip, enchantid, kinds.enchant)
+    end
+    if #bonuses ~= 0 then addLine(tooltip, bonuses, kinds.bonus) end
+    if #gems ~= 0 then addLine(tooltip, gems, kinds.gem) end
+  end
+end
+
 -- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
@@ -138,7 +200,13 @@ if TooltipDataProcessor then
     if data.type == Enum.TooltipDataType.Spell then
       addFromData(tooltip, data, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Item then
-      addFromData(tooltip, data, kinds.item)
+      -- pass items through attachItemTooltip to possibly extract more info besides ItemID
+      if (data.id) then
+        local link = select(2, GetItemInfo(data.id));
+        if link then
+          attachItemTooltip(tooltip, link)
+        end
+      end
     elseif data.type == Enum.TooltipDataType.Unit then
       addFromData(tooltip, data, kinds.unit)
     elseif data.type == Enum.TooltipDataType.Currency then
@@ -275,71 +343,16 @@ hook(GameTooltip, "SetRecipeReagentItem", function(self, id)
   addLine(self, id, kinds.item)
 end)
 
-local function attachItemTooltip(self)
-  local link = select(2, self:GetItem())
-  if not link then return end
-
-  local itemString = string.match(link, "item:([%-?%d:]+)")
-  if not itemString then return end
-
-  local enchantid = ""
-  local bonusid = ""
-  local gemid = ""
-  local bonuses = {}
-  local itemSplit = {}
-
-  for v in string.gmatch(itemString, "(%d*:?)") do
-    if v == ":" then
-      itemSplit[#itemSplit + 1] = 0
-    else
-      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
-    end
-  end
-
-  for index = 1, tonumber(itemSplit[13]) do
-    bonuses[#bonuses + 1] = itemSplit[13 + index]
-  end
-
-  local gems = {}
-  if GetItemGem then
-      for i=1, 4 do
-      local _,gemLink = GetItemGem(link, i)
-      if gemLink then
-        local gemDetail = string.match(gemLink, "item[%-?%d:]+")
-        gems[#gems + 1] = string.match(gemDetail, "item:(%d+):")
-      elseif flags == 256 then
-        gems[#gems + 1] = "0"
-      end
-    end
-  end
-  local id = string.match(link, "item:(%d*)")
-  if (id == "" or id == "0") and TradeSkillFrame ~= nil and TradeSkillFrame:IsVisible() and GetMouseFocus().reagentIndex then
-    local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
-    for i = 1, 8 do
-      if GetMouseFocus().reagentIndex == i then
-        id = C_TradeSkillUI.GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
-        break
-      end
-    end
-  end
-
-  if id then
-    addLine(self, id, kinds.item)
-    if itemSplit[2] ~= 0 then
-      enchantid = itemSplit[2]
-      addLine(self, enchantid, kinds.enchant)
-    end
-    if #bonuses ~= 0 then addLine(self, bonuses, kinds.bonus) end
-    if #gems ~= 0 then addLine(self, gems, kinds.gem) end
-  end
+local function onSetItem(self)
+  attachItemTooltip(self, select(2, self:GetItem()))
 end
 
-hookScript(GameTooltip, "OnTooltipSetItem", attachItemTooltip)
-hookScript(ItemRefTooltip, "OnTooltipSetItem", attachItemTooltip)
-hookScript(ItemRefShoppingTooltip1, "OnTooltipSetItem", attachItemTooltip)
-hookScript(ItemRefShoppingTooltip2, "OnTooltipSetItem", attachItemTooltip)
-hookScript(ShoppingTooltip1, "OnTooltipSetItem", attachItemTooltip)
-hookScript(ShoppingTooltip2, "OnTooltipSetItem", attachItemTooltip)
+hookScript(GameTooltip, "OnTooltipSetItem", onSetItem)
+hookScript(ItemRefTooltip, "OnTooltipSetItem", onSetItem)
+hookScript(ItemRefShoppingTooltip1, "OnTooltipSetItem", onSetItem)
+hookScript(ItemRefShoppingTooltip2, "OnTooltipSetItem", onSetItem)
+hookScript(ShoppingTooltip1, "OnTooltipSetItem", onSetItem)
+hookScript(ShoppingTooltip2, "OnTooltipSetItem", onSetItem)
 
 local function achievementOnEnter(button)
   GameTooltip:SetOwner(button, "ANCHOR_NONE")
@@ -352,14 +365,15 @@ local function criteriaOnEnter(index)
   return function(self)
     local button = self:GetParent() and self:GetParent():GetParent()
     if not button or not button.id then return end
-    local criteriaid = select(10, GetAchievementCriteriaInfo(button.id, self.___index or index))
-    if criteriaid then
+    if not GetAchievementCriteriaInfo then return end
+    local criteriaId = select(10, GetAchievementCriteriaInfo(button.id, self.___index or index))
+    if criteriaId then
       if not GameTooltip:IsVisible() then
         GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE")
       end
       GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
       addLine(GameTooltip, button.id, kinds.achievement)
-      addLine(GameTooltip, criteriaid, kinds.criteria)
+      addLine(GameTooltip, criteriaId, kinds.criteria)
       GameTooltip:Show()
     end
   end
