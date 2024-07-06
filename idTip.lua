@@ -1,8 +1,4 @@
-local hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
-      GetGlyphSocketInfo, tonumber, strfind, _G
-    = hooksecurefunc, select, UnitBuff, UnitDebuff, UnitAura, UnitGUID,
-      GetGlyphSocketInfo, tonumber, strfind, _G
-
+local hooksecurefunc, select, tonumber, _G = hooksecurefunc, select, tonumber, _G
 local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
 local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
@@ -56,7 +52,7 @@ local function hookScript(table, fn, cb)
   end
 end
 
-function getTooltipName(tooltip)
+local function getTooltipName(tooltip)
   return tooltip:GetName() or nil
 end
 
@@ -156,25 +152,25 @@ local function attachItemTooltip(tooltip, id)
   end
 
   -- TODO: GetMouseFocus is replaced with GetMouseFoci in TWW
-  local id = string.match(link, "item:(%d*)")
-  if (id == "" or id == "0") and TradeSkillFrame and TradeSkillFrame.RecipeList and TradeSkillFrame:IsVisible() and GetRecipeReagentItemLink and GetMouseFocus and GetMouseFocus().reagentIndex then
+  local itemId = string.match(link, "item:(%d*)")
+  if (itemId == "" or itemId == "0") and TradeSkillFrame and TradeSkillFrame.RecipeList and TradeSkillFrame:IsVisible() and GetRecipeReagentItemLink and GetMouseFocus and GetMouseFocus().reagentIndex then
     local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
     for i = 1, 8 do
       if GetMouseFocus().reagentIndex == i then
-        id = GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
+        itemId = GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
         break
       end
     end
   end
 
-  if id then
-    addLine(tooltip, id, kinds.item)
+  if itemId then
+    addLine(tooltip, itemId, kinds.item)
 
     if itemSplit[2] ~= 0 then addLine(tooltip, itemSplit[2], kinds.enchant) end
     if #bonuses ~= 0 then addLine(tooltip, bonuses, kinds.bonus) end
     if #gems ~= 0 then addLine(tooltip, gems, kinds.gem) end
 
-    local expansionId = select(15, GetItemInfo(id))
+    local expansionId = select(15, GetItemInfo(itemId))
     if expansionId then
       addLine(tooltip, expansionId, kinds.expansion)
     end
@@ -258,7 +254,7 @@ hook(GameTooltip, "SetSpellByID", function(tooltip, id)
   addLineByKind(tooltip, id, kinds.spell)
 end)
 
-hook(_G, "SetItemRef", function(link, ...)
+hook(_G, "SetItemRef", function(link)
   local id = tonumber(link:match("spell:(%d+)"))
   addLine(ItemRefTooltip, id, kinds.spell)
 end)
@@ -305,7 +301,7 @@ hook(GameTooltip, "SetPvpTalent", function(tooltip, id)
 end)
 
 -- Pet Journal team icon
-hook(GameTooltip, "SetCompanionPet", function(tooltip, petID)
+hook(GameTooltip, "SetCompanionPet", function(_tooltip, petID)
   if not C_PetJournal or not C_PetJournal.GetPetInfoByPetID then return end
   local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
   if speciesID then
@@ -397,7 +393,7 @@ f:SetScript("OnEvent", function(_, _, addon)
       hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetProgressBar", getter("progressBars"))
     elseif AchievementFrameAchievementsContainer then
       -- pre-dragonflight
-      for i,button in ipairs(AchievementFrameAchievementsContainer.buttons) do
+      for _, button in ipairs(AchievementFrameAchievementsContainer.buttons) do
         hookScript(button, "OnEnter", achievementOnEnter)
         hookScript(button, "OnLeave", GameTooltip_Hide)
 
@@ -413,7 +409,7 @@ f:SetScript("OnEvent", function(_, _, addon)
       end
     end
   elseif addon == "Blizzard_Collections" then
-    hook(_G, "WardrobeCollectionFrame_SetAppearanceTooltip", function(self, sources)
+    hook(_G, "WardrobeCollectionFrame_SetAppearanceTooltip", function(_frame, sources)
       local visualIDs = {}
       local sourceIDs = {}
       local itemIDs = {}

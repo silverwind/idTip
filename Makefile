@@ -2,6 +2,10 @@ node_modules: package.json
 	npm install --no-save
 	@touch node_modules
 
+.PHONY: lint
+lint:
+	luacheck idTip.lua
+
 .PHONY: test
 test: node_modules
 	npx vitest

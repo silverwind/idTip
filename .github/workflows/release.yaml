@@ -11,6 +11,9 @@ jobs:
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: lunarmodules/luacheck@v1
+        with:
+            args: idTip.lua
       - run: make test
       - run: make changelog > CHANGELOG.txt
       - uses: BigWigsMods/packager@v2
