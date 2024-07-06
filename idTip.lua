@@ -7,6 +7,7 @@ local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpe
 local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
 local GetItemGem = (C_Item and C_Item.GetItemGem) and C_Item.GetItemGem or GetItemGem
+local GetItemSpell = (C_Item and C_Item.GetItemSpell) and C_Item.GetItemSpell or GetItemSpell
 local GetRecipeReagentItemLink = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink) and C_TradeSkillUI.GetRecipeReagentItemLink or GetTradeSkillReagentItemLink
 
 local kinds = {
@@ -93,6 +94,10 @@ local function addLine(tooltip, id, kind)
   elseif kind == kinds.item then
     iconId = GetItemIconByID(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
+    local spellId = select(2, GetItemSpell(id))
+    if spellId then
+      addLine(tooltip, spellId, kinds.spell)
+    end
   end
 
   tooltip:Show()
