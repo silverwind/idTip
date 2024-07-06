@@ -103,30 +103,12 @@ local function addLine(tooltip, id, kind)
   tooltip:Show()
 end
 
-local function addLineByKind(self, id, kind)
+local function addLineByKind(tooltip, id, kind)
   if not kind or not id then return end
   if kind == "spell" or kind == "enchant" or kind == "trade" then
-    addLine(self, id, kinds.spell)
-  elseif kind == "talent" then
-    addLine(self, id, kinds.talent)
-  elseif kind == "quest" then
-    addLine(self, id, kinds.quest)
-  elseif kind == "achievement" then
-    addLine(self, id, kinds.achievement)
-  elseif kind == "item" then
-    addLine(self, id, kinds.item)
-  elseif kind == "currency" then
-    addLine(self, id, kinds.currency)
-  elseif kind == "summonmount" then
-    addLine(self, id, kinds.mount)
-  elseif kind == "companion" then
-    addLine(self, id, kinds.companion)
-  elseif kind == "macro" then
-    addLine(self, id, kinds.macro)
-  elseif kind == "equipmentset" then
-    addLine(self, id, kinds.equipmentset)
-  elseif kind == "visual" then
-    addLine(self, id, kinds.visual)
+    addLine(tooltip, id, kinds.spell)
+  elseif (kinds[kind]) then
+    addLine(tooltip, id, kinds[kind])
   end
 end
 
