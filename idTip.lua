@@ -33,6 +33,7 @@ local kinds = {
   icon = "IconID",
   areapoi = "AreaPoiID",
   vignette = "VignetteID",
+  expansion = "ExpansionID",
 }
 
 local function contains(table, element)
@@ -124,15 +125,21 @@ local function addLineByKind(self, id, kind)
   end
 end
 
-local function addItemTooltip(tooltip, link)
+local function attachItemTooltip(tooltip, id)
+  local link
+  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid then
+    link = C_Item.GetItemLinkByGUID(tooltip.info.tooltipData.guid)
+  elseif tooltip.GetItem then
+    link = select(2, tooltip:GetItem())
+  else
+    addLine(tooltip, id, kinds.item)
+    return
+  end
   if not link then return end
 
   local itemString = string.match(link, "item:([%-?%d:]+)")
   if not itemString then return end
 
-  local enchantid = ""
-  local bonusid = ""
-  local gemid = ""
   local bonuses = {}
   local itemSplit = {}
 
@@ -175,12 +182,15 @@ local function addItemTooltip(tooltip, link)
 
   if id then
     addLine(tooltip, id, kinds.item)
-    if itemSplit[2] ~= 0 then
-      enchantid = itemSplit[2]
-      addLine(tooltip, enchantid, kinds.enchant)
-    end
+
+    if itemSplit[2] ~= 0 then addLine(tooltip, itemSplit[2], kinds.enchant) end
     if #bonuses ~= 0 then addLine(tooltip, bonuses, kinds.bonus) end
     if #gems ~= 0 then addLine(tooltip, gems, kinds.gem) end
+
+    local expansionId = select(15, GetItemInfo(id))
+    if expansionId then
+      addLine(tooltip, expansionId, kinds.expansion)
+    end
   end
 end
 
@@ -191,17 +201,7 @@ if TooltipDataProcessor then
     if data.type == Enum.TooltipDataType.Spell then
       addLine(tooltip, data.id, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Item then
-      -- pass items through addItemTooltip to possibly extract more info besides ItemID
-      if data.hyperlink then
-        addItemTooltip(tooltip, data.hyperlink)
-      elseif (data.id) then
-        -- possibly blizzard bug: these links do not contain any GemID or BonusID
-        -- https://github.com/silverwind/idTip/issues/111#issuecomment-2207218825
-        local link = select(2, GetItemInfo(data.id));
-        if link then
-          addItemTooltip(tooltip, link)
-        end
-      end
+      attachItemTooltip(tooltip, data.id)
     elseif data.type == Enum.TooltipDataType.Unit then
       if data.guid then
         local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
@@ -347,7 +347,7 @@ hook(GameTooltip, "SetRecipeReagentItem", function(self, id)
 end)
 
 local function onSetItem(self)
-  addItemTooltip(self, select(2, self:GetItem()))
+  attachItemTooltip(self, nil)
 end
 
 hookScript(GameTooltip, "OnTooltipSetItem", onSetItem)
