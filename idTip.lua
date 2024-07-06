@@ -124,16 +124,7 @@ local function addLineByKind(self, id, kind)
   end
 end
 
-local function addFromData(tooltip, data, kind)
-  if kind == kinds.unit and data.guid then
-    local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-    if id and data.guid:match("%a+") ~= "Player" then addLine(tooltip, id, kind) end
-  elseif data.id then
-    addLine(tooltip, data.id, kind)
-  end
-end
-
-local function attachItemTooltip(tooltip, link)
+local function addItemTooltip(tooltip, link)
   if not link then return end
 
   local itemString = string.match(link, "item:([%-?%d:]+)")
@@ -198,39 +189,49 @@ if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
     if data.type == Enum.TooltipDataType.Spell then
-      addFromData(tooltip, data, kinds.spell)
+      addLine(tooltip, data.id, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Item then
-      -- pass items through attachItemTooltip to possibly extract more info besides ItemID
-      if (data.id) then
+      -- pass items through addItemTooltip to possibly extract more info besides ItemID
+      if data.hyperlink then
+        addItemTooltip(tooltip, data.hyperlink)
+      elseif (data.id) then
         -- possibly blizzard bug: these links do not contain any GemID or BonusID
         -- https://github.com/silverwind/idTip/issues/111#issuecomment-2207218825
         local link = select(2, GetItemInfo(data.id));
         if link then
-          attachItemTooltip(tooltip, link)
+          addItemTooltip(tooltip, link)
         end
       end
     elseif data.type == Enum.TooltipDataType.Unit then
-      addFromData(tooltip, data, kinds.unit)
+      if data.guid then
+        local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+        if id and data.guid:match("%a+") ~= "Player" then
+          addLine(tooltip, id, kinds.unit)
+        else
+          addLine(tooltip, data.id, kinds.unit)
+        end
+      end
+      addLine(tooltip, data.id, kinds.unit)
     elseif data.type == Enum.TooltipDataType.Currency then
-      addFromData(tooltip, data, kinds.currency)
+      addLine(tooltip, data.id, kinds.currency)
     elseif data.type == Enum.TooltipDataType.UnitAura then
-      addFromData(tooltip, data, kinds.spell)
+      addLine(tooltip, data.id, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Mount then
-      addFromData(tooltip, data, kinds.mount)
+      addLine(tooltip, data.id, kinds.mount)
     elseif data.type == Enum.TooltipDataType.Achievement then
-      addFromData(tooltip, data, kinds.achievement)
+      addLine(tooltip, data.id, kinds.achievement)
     elseif data.type == Enum.TooltipDataType.EquipmentSet then
-      addFromData(tooltip, data, kinds.equipmentset)
+      addLine(tooltip, data.id, kinds.equipmentset)
     elseif data.type == Enum.TooltipDataType.RecipeRankInfo then
-      addFromData(tooltip, data, kinds.spell)
+      addLine(tooltip, data.id, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Totem then
-      addFromData(tooltip, data, kinds.spell)
+      addLine(tooltip, data.id, kinds.spell)
     elseif data.type == Enum.TooltipDataType.Toy then
-      addFromData(tooltip, data, kinds.item)
+      addLine(tooltip, data.id, kinds.item)
     elseif data.type == Enum.TooltipDataType.Quest then
-      addFromData(tooltip, data, kinds.quest)
+      addLine(tooltip, data.id, kinds.quest)
     elseif data.type == Enum.TooltipDataType.Macro then
-      addFromData(tooltip, data, kinds.macro)
+      addLine(tooltip, data.id, kinds.macro)
     end
   end)
 end
@@ -346,7 +347,7 @@ hook(GameTooltip, "SetRecipeReagentItem", function(self, id)
 end)
 
 local function onSetItem(self)
-  attachItemTooltip(self, select(2, self:GetItem()))
+  addItemTooltip(self, select(2, self:GetItem()))
 end
 
 hookScript(GameTooltip, "OnTooltipSetItem", onSetItem)
