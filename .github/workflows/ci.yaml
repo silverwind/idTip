@@ -3,12 +3,13 @@ on: [push, pull_request]
 
 jobs:
   test:
-    strategy:
-      fail-fast: false
     runs-on: ubuntu-latest
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-node@v4
         with:
           node-version: 20
+      - uses: lunarmodules/luacheck@v1
+        with:
+            args: idTip.lua
       - run: make test
