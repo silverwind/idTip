@@ -60,58 +60,64 @@ end
 
 local function addLine(tooltip, id, kind)
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
-  if not idTipConfig.enabled then return end
+  if idTipConfig and not idTipConfig.enabled then return end
+  if idTipConfig and not idTipConfig[kind .. "Enabled"] then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Abort when tooltip has no name or when :GetName throws
   local ok, name = pcall(getTooltipName, tooltip)
   if not ok or not name then return end
 
-  -- Check if we already added to this tooltip. Happens on the talent frame
+  -- Check if we already added to this tooltip
   local frame, text
   for i = 1, 32 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
-    if text and string.find(text, kind) then return end
+    if text and string.find(text, kinds[kind]) then return end
   end
 
   local left, right
   if type(id) == "table" then
-    left = NORMAL_FONT_COLOR_CODE .. kind .. "s" .. FONT_COLOR_CODE_CLOSE
+    left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. "s" .. FONT_COLOR_CODE_CLOSE
     right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ", ") .. FONT_COLOR_CODE_CLOSE
   else
-    left = NORMAL_FONT_COLOR_CODE .. kind .. FONT_COLOR_CODE_CLOSE
+    left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. FONT_COLOR_CODE_CLOSE
     right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
   end
 
   tooltip:AddDoubleLine(left, right)
+end
 
-  if kind == kinds.spell and GetSpellTexture then
+local function add(tooltip, id, kind)
+  addLine(tooltip, id, kind)
+
+  -- add additional sub-kinds based on kind
+  if kind == "spell" and GetSpellTexture then
     local iconId = GetSpellTexture(id)
-    if iconId then addLine(tooltip, iconId, kinds.icon) end
-  elseif kind == kinds.item and GetItemIconByID then
+    if iconId then add(tooltip, iconId, "icon") end
+  elseif kind == "item" and GetItemIconByID then
     local iconId = GetItemIconByID(id)
-    if iconId then addLine(tooltip, iconId, kinds.icon) end
+    if iconId then add(tooltip, iconId, "icon") end
     local spellId = select(2, GetItemSpell(id))
     if spellId then
-      addLine(tooltip, spellId, kinds.spell)
+      add(tooltip, spellId, "spell")
     end
-  elseif kind == kinds.macro and tooltip.GetPrimaryTooltipData then
+  elseif kind == "macro" and tooltip.GetPrimaryTooltipData then
     data = tooltip:GetPrimaryTooltipData();
     if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
-      addLine(tooltip, data.lines[1].tooltipID, kinds.spell)
+      add(tooltip, data.lines[1].tooltipID, "spell")
     end
   end
 
   tooltip:Show()
 end
 
-local function addLineByKind(tooltip, id, kind)
+local function addByKind(tooltip, id, kind)
   if not kind or not id then return end
   if kind == "spell" or kind == "enchant" or kind == "trade" then
-    addLine(tooltip, id, kinds.spell)
+    add(tooltip, id, "spell")
   elseif (kinds[kind]) then
-    addLine(tooltip, id, kinds[kind])
+    add(tooltip, id, kind)
   end
 end
 
@@ -122,7 +128,7 @@ local function attachItemTooltip(tooltip, id)
   elseif tooltip.GetItem then
     link = select(2, tooltip:GetItem())
   else
-    addLine(tooltip, id, kinds.item)
+    add(tooltip, id, "item")
     return
   end
   if not link then return end
@@ -171,15 +177,15 @@ local function attachItemTooltip(tooltip, id)
   end
 
   if itemId then
-    addLine(tooltip, itemId, kinds.item)
+    add(tooltip, itemId, "item")
 
-    if itemSplit[2] ~= 0 then addLine(tooltip, itemSplit[2], kinds.enchant) end
-    if #bonuses ~= 0 then addLine(tooltip, bonuses, kinds.bonus) end
-    if #gems ~= 0 then addLine(tooltip, gems, kinds.gem) end
+    if itemSplit[2] ~= 0 then add(tooltip, itemSplit[2], "enchant") end
+    if #bonuses ~= 0 then add(tooltip, bonuses, "bonus") end
+    if #gems ~= 0 then add(tooltip, gems, "gem") end
 
     local expansionId = select(15, GetItemInfo(itemId))
     if expansionId then
-      addLine(tooltip, expansionId, kinds.expansion)
+      add(tooltip, expansionId, "expansion")
     end
   end
 end
@@ -189,39 +195,39 @@ if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
     if data.type == Enum.TooltipDataType.Spell then
-      addLine(tooltip, data.id, kinds.spell)
+      add(tooltip, data.id, "spell")
     elseif data.type == Enum.TooltipDataType.Item then
       attachItemTooltip(tooltip, data.id)
     elseif data.type == Enum.TooltipDataType.Unit then
       if data.guid then
         local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
         if id and data.guid:match("%a+") ~= "Player" then
-          addLine(tooltip, id, kinds.unit)
+          add(tooltip, id, "unit")
         else
-          addLine(tooltip, data.id, kinds.unit)
+          add(tooltip, data.id, "unit")
         end
       end
-      addLine(tooltip, data.id, kinds.unit)
+      add(tooltip, data.id, "unit")
     elseif data.type == Enum.TooltipDataType.Currency then
-      addLine(tooltip, data.id, kinds.currency)
+      add(tooltip, data.id, "currency")
     elseif data.type == Enum.TooltipDataType.UnitAura then
-      addLine(tooltip, data.id, kinds.spell)
+      add(tooltip, data.id, "spell")
     elseif data.type == Enum.TooltipDataType.Mount then
-      addLine(tooltip, data.id, kinds.mount)
+      add(tooltip, data.id, "mount")
     elseif data.type == Enum.TooltipDataType.Achievement then
-      addLine(tooltip, data.id, kinds.achievement)
+      add(tooltip, data.id, "achievement")
     elseif data.type == Enum.TooltipDataType.EquipmentSet then
-      addLine(tooltip, data.id, kinds.equipmentset)
+      add(tooltip, data.id, "equipmentset")
     elseif data.type == Enum.TooltipDataType.RecipeRankInfo then
-      addLine(tooltip, data.id, kinds.spell)
+      add(tooltip, data.id, "spell")
     elseif data.type == Enum.TooltipDataType.Totem then
-      addLine(tooltip, data.id, kinds.spell)
+      add(tooltip, data.id, "spell")
     elseif data.type == Enum.TooltipDataType.Toy then
-      addLine(tooltip, data.id, kinds.item)
+      add(tooltip, data.id, "item")
     elseif data.type == Enum.TooltipDataType.Quest then
-      addLine(tooltip, data.id, kinds.quest)
+      add(tooltip, data.id, "quest")
     elseif data.type == Enum.TooltipDataType.Macro then
-      addLine(tooltip, data.id, kinds.macro)
+      add(tooltip, data.id, "macro")
     end
   end)
 end
@@ -229,13 +235,13 @@ end
 if GetActionInfo then
   hook(GameTooltip, "SetAction", function(tooltip, slot)
     local kind, id = GetActionInfo(slot)
-    addLineByKind(tooltip, id, kind)
+    addByKind(tooltip, id, kind)
   end)
 end
 
 local function onSetHyperlink(tooltip, link)
   local kind, id = string.match(link,"^(%a+):(%d+)")
-  addLineByKind(tooltip, id, kind)
+  addByKind(tooltip, id, kind)
 end
 hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetHyperlink", onSetHyperlink)
@@ -243,75 +249,75 @@ hook(GameTooltip, "SetHyperlink", onSetHyperlink)
 if UnitBuff then
   hook(GameTooltip, "SetUnitBuff", function(tooltip, ...)
     local id = select(10, UnitBuff(...))
-    addLine(tooltip, id, kinds.spell)
+    add(tooltip, id, "spell")
   end)
 end
 
 if UnitDebuff then
   hook(GameTooltip, "SetUnitDebuff", function(tooltip, ...)
     local id = select(10, UnitDebuff(...))
-    addLine(tooltip, id, kinds.spell)
+    add(tooltip, id, "spell")
   end)
 end
 
 if UnitAura then
   hook(GameTooltip, "SetUnitAura", function(tooltip, ...)
     local id = select(10, UnitAura(...))
-    addLine(tooltip, id, kinds.spell)
+    add(tooltip, id, "spell")
   end)
 end
 
 hook(GameTooltip, "SetSpellByID", function(tooltip, id)
-  addLineByKind(tooltip, id, kinds.spell)
+  addByKind(tooltip, id, "spell")
 end)
 
 hook(_G, "SetItemRef", function(link)
   local id = tonumber(link:match("spell:(%d+)"))
-  addLine(ItemRefTooltip, id, kinds.spell)
+  add(ItemRefTooltip, id, "spell")
 end)
 
 hookScript(GameTooltip, "OnTooltipSetSpell", function(tooltip)
   local id = select(2, tooltip:GetSpell())
-  addLine(tooltip, id, kinds.spell)
+  add(tooltip, id, "spell")
 end)
 
 if SpellBook_GetSpellBookSlot then
   hook(_G, "SpellButton_OnEnter", function(btn)
     local slot = SpellBook_GetSpellBookSlot(btn)
     local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-    addLine(GameTooltip, spellID, kinds.spell)
+    add(GameTooltip, spellID, "spell")
   end)
 end
 
 hook(GameTooltip, "SetRecipeResultItem", function(tooltip, id)
-  addLine(tooltip, id, kinds.spell)
+  add(tooltip, id, "spell")
 end)
 
 hook(GameTooltip, "SetRecipeRankInfo", function(tooltip, id)
-  addLine(tooltip, id, kinds.spell)
+  add(tooltip, id, "spell")
 end)
 
 if C_ArtifactUI and C_ArtifactUI.GetPowerInfo then
   hook(GameTooltip, "SetArtifactPowerByID", function(tooltip, powerID)
     local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
-    addLine(tooltip, powerID, kinds.artifactpower)
-    addLine(tooltip, powerInfo.spellID, kinds.spell)
+    add(tooltip, powerID, "artifactpower")
+    add(tooltip, powerInfo.spellID, "spell")
   end)
 end
 
 if GetTalentInfoByID then
   hook(GameTooltip, "SetTalent", function(tooltip, id)
     local spellID = select(6, GetTalentInfoByID(id))
-    addLine(tooltip, id, kinds.talent)
-    addLine(tooltip, spellID, kinds.spell)
+    add(tooltip, id, "talent")
+    add(tooltip, spellID, "spell")
   end)
 end
 
 if GetPvpTalentInfoByID then
   hook(GameTooltip, "SetPvpTalent", function(tooltip, id)
     local spellID = select(6, GetPvpTalentInfoByID(id))
-    addLine(tooltip, id, kinds.talent)
-    addLine(tooltip, spellID, kinds.spell)
+    add(tooltip, id, "talent")
+    add(tooltip, spellID, "spell")
   end)
 end
 
@@ -321,8 +327,8 @@ if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
     local speciesId = select(1, C_PetJournal.GetPetInfoByPetID(petId));
     if speciesId then
       local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId));
-      addLine(GameTooltip, speciesId, kinds.species);
-      addLine(GameTooltip, npcId, kinds.unit);
+      add(GameTooltip, speciesId, "species");
+      add(GameTooltip, npcId, "unit");
     end
   end)
 end
@@ -333,16 +339,16 @@ hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
   if unit and UnitGUID then
     local guid = UnitGUID(unit) or ""
     local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
-    if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, kinds.unit) end
+    if id and guid:match("%a+") ~= "Player" then add(GameTooltip, id, "unit") end
   end
 end)
 
 hook(GameTooltip, "SetToyByItemID", function(tooltip, id)
-  addLine(tooltip, id, kinds.item)
+  add(tooltip, id, "item")
 end)
 
 hook(GameTooltip, "SetRecipeReagentItem", function(tooltip, id)
-  addLine(tooltip, id, kinds.item)
+  add(tooltip, id, "item")
 end)
 
 local function onSetItem(tooltip)
@@ -358,7 +364,7 @@ hookScript(ShoppingTooltip2, "OnTooltipSetItem", onSetItem)
 local function achievementOnEnter(btn)
   GameTooltip:SetOwner(btn, "ANCHOR_NONE")
   GameTooltip:SetPoint("TOPLEFT", btn, "TOPRIGHT", 0, 0)
-  addLine(GameTooltip, btn.id, kinds.achievement)
+  add(GameTooltip, btn.id, "achievement")
   GameTooltip:Show()
 end
 
@@ -373,8 +379,8 @@ local function criteriaOnEnter(index)
         GameTooltip:SetOwner(btn:GetParent(), "ANCHOR_NONE")
       end
       GameTooltip:SetPoint("TOPLEFT", btn, "TOPRIGHT", 0, 0)
-      addLine(GameTooltip, btn.id, kinds.achievement)
-      addLine(GameTooltip, criteriaId, kinds.criteria)
+      add(GameTooltip, btn.id, "achievement")
+      add(GameTooltip, criteriaId, "criteria")
       GameTooltip:Show()
     end
   end
@@ -407,37 +413,37 @@ end
 if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then
   hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
     local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
-    addLine(tooltip, id, kinds.currency)
+    add(tooltip, id, "currency")
   end)
 end
 
 hook(GameTooltip, "SetCurrencyByID", function(tooltip, id)
-  addLine(tooltip, id, kinds.currency)
+  add(tooltip, id, "currency")
 end)
 
 hook(GameTooltip, "SetCurrencyTokenByID", function(tooltip, id)
-  addLine(tooltip, id, kinds.currency)
+  add(tooltip, id, "currency")
 end)
 
 if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then
   hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
     local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
-    addLine(GameTooltip, id, kinds.quest)
+    add(GameTooltip, id, "quest")
   end)
 end
 
 hook(_G, "TaskPOI_OnEnter", function(tooltip)
-  if tooltip and tooltip.questID then addLine(GameTooltip, tooltip.questID, kinds.quest) end
+  if tooltip and tooltip.questID then add(GameTooltip, tooltip.questID, "quest") end
 end)
 
 -- AreaPois (on the world map)
 hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
-  if tooltip and tooltip.areaPoiID then addLine(GameTooltip, tooltip.areaPoiID, kinds.areapoi) end
+  if tooltip and tooltip.areaPoiID then add(GameTooltip, tooltip.areaPoiID, "areapoi") end
 end)
 
 -- Vignettes (on the world map)
 hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
-  if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then addLine(GameTooltip, tooltip.vignetteInfo.vignetteID, kinds.vignette) end
+  if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then add(GameTooltip, tooltip.vignetteInfo.vignetteID, "vignette") end
 end)
 
 -------------------------------------------------------------------------------
@@ -448,11 +454,19 @@ local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, addon)
   if addon == addonName then
-    local defaults = {enabled = true}
+    local defaults = {
+      enabled = true
+    }
+
     if not idTipConfig then idTipConfig = {} end
 
     for key, value in pairs(defaults) do
       if type(idTipConfig[key]) ~= type(defaults[key]) then idTipConfig[key] = defaults[key] end
+    end
+    for key, value in pairs(kinds) do
+      if type(idTipConfig[key .. "Enabled"]) ~= "boolean" then
+        idTipConfig[key .. "Enabled"] = true
+      end
     end
 
     DevTools_Dump(idTipConfig)
@@ -508,9 +522,9 @@ f:SetScript("OnEvent", function(_, _, addon)
         if sources[i].itemID and not contains(visualIDs, sources[i].itemID) then table.insert(itemIDs, sources[i].itemID) end
       end
 
-      if #visualIDs ~= 0 then addLine(GameTooltip, visualIDs, kinds.visual) end
-      if #sourceIDs ~= 0 then addLine(GameTooltip, sourceIDs, kinds.source) end
-      if #itemIDs ~= 0 then addLine(GameTooltip, itemIDs, kinds.item) end
+      if #visualIDs ~= 0 then add(GameTooltip, visualIDs, "visual") end
+      if #sourceIDs ~= 0 then add(GameTooltip, sourceIDs, "source") end
+      if #itemIDs ~= 0 then add(GameTooltip, itemIDs, "item") end
     end)
 
     -- Pet Journal selected pet info icon
@@ -518,15 +532,15 @@ f:SetScript("OnEvent", function(_, _, addon)
       if not C_PetJournal or not C_PetBattles.GetPetInfoBySpeciesID then return end
       if PetJournalPetCard.speciesID then
         local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
-        addLine(GameTooltip, PetJournalPetCard.speciesID, kinds.species);
-        addLine(GameTooltip, npcId, kinds.unit);
+        add(GameTooltip, PetJournalPetCard.speciesID, "species");
+        add(GameTooltip, npcId, "unit");
       end
     end);
   elseif addon == "Blizzard_GarrisonUI" then
     -- ability id
     hook(_G, "AddAutoCombatSpellToTooltip", function (tooltip, info)
       if info and info.autoCombatSpellID then
-        addLine(tooltip, info.autoCombatSpellID, kinds.ability)
+        add(tooltip, info.autoCombatSpellID, "ability")
       end
     end)
   end
@@ -551,7 +565,6 @@ panel:SetScript("OnShow", function()
     end)
     checkBox.label = _G[checkBox:GetName() .. "Text"]
     checkBox.label:SetText(label)
-    checkBox.tooltipText = label
     return checkBox
   end
 
@@ -559,8 +572,25 @@ panel:SetScript("OnShow", function()
   title:SetPoint("TOPLEFT", 16, -16)
   title:SetText(addonName)
 
-  local enabled = createCheckbox("Enabled", "enabled")
-  enabled:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+  local checkBox = createCheckbox("Enabled", "enabled")
+  checkBox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+
+  local kindsTitle = panel:CreateFontString("ARTWORK", nil, "GameFontNormal")
+  kindsTitle:SetPoint("TOPLEFT", checkBox, "BOTTOMLEFT", 0, -16)
+  kindsTitle:SetText("Types")
+
+  local index = 0
+  local rowHeight = 20
+  local columnWidth = 140
+  local rowNum = 10
+  for key, value in pairs(kinds) do
+    local checkBox = createCheckbox(value, key .. "Enabled")
+    local columnIndex = math.floor(index / rowNum)
+    local offsetRight = columnIndex * columnWidth
+    local offsetUp = -(index * rowHeight) + (rowHeight * rowNum  * columnIndex) - 16
+    checkBox:SetPoint("TOPLEFT", kindsTitle, "BOTTOMLEFT", offsetRight, offsetUp)
+    index = index + 1
+  end
 
   panel:SetScript("OnShow", nil)
 end)
