@@ -110,7 +110,7 @@ end
 
 local function attachItemTooltip(tooltip, id)
   local link
-  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid then
+  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and C_Item and C_Item.GetItemLinkByGUID then
     link = C_Item.GetItemLinkByGUID(tooltip.info.tooltipData.guid)
   elseif tooltip.GetItem then
     link = select(2, tooltip:GetItem())
