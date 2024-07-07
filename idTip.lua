@@ -83,16 +83,20 @@ local function addLine(tooltip, id, kind)
 
   tooltip:AddDoubleLine(left, right)
 
-  local iconId
-  if kind == kinds.spell then
-    iconId = GetSpellTexture(id)
+  if kind == kinds.spell and GetSpellTexture then
+    local iconId = GetSpellTexture(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
-  elseif kind == kinds.item then
-    iconId = GetItemIconByID(id)
+  elseif kind == kinds.item and GetItemIconByID then
+    local iconId = GetItemIconByID(id)
     if iconId then addLine(tooltip, iconId, kinds.icon) end
     local spellId = select(2, GetItemSpell(id))
     if spellId then
       addLine(tooltip, spellId, kinds.spell)
+    end
+  elseif kind == kinds.macro and tooltip.GetPrimaryTooltipData then
+    data = tooltip:GetPrimaryTooltipData();
+    if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
+      addLine(tooltip, data.lines[1].tooltipID, kinds.spell)
     end
   end
 
