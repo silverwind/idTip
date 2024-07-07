@@ -463,13 +463,12 @@ f:SetScript("OnEvent", function(_, _, addon)
     for key, _ in pairs(defaults) do
       if type(idTipConfig[key]) ~= type(defaults[key]) then idTipConfig[key] = defaults[key] end
     end
+
     for key, _ in pairs(kinds) do
       if type(idTipConfig[key .. "Enabled"]) ~= "boolean" then
         idTipConfig[key .. "Enabled"] = true
       end
     end
-
-    DevTools_Dump(idTipConfig)
   elseif addon == "Blizzard_AchievementUI" then
     if AchievementTemplateMixin then
       -- dragonflight
