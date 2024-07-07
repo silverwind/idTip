@@ -596,6 +596,6 @@ end)
 
 if InterfaceOptions_AddCategory then
   InterfaceOptions_AddCategory(panel)
-else
+elseif Settings and Settings.RegisterAddOnCategory and Settings.RegisterCanvasLayoutCategory then
   Settings.RegisterAddOnCategory(select(1, Settings.RegisterCanvasLayoutCategory(panel, panel.name)));
 end
