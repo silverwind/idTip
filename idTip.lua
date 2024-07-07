@@ -127,7 +127,11 @@ local function attachItemTooltip(tooltip, id)
   local itemSplit = {}
 
   for v in string.gmatch(itemString, "(%d*:?)") do
-    itemSplit[#itemSplit + 1] = v == ":" and 0 string.gsub(v, ":", "")
+    if v == ":" then
+      itemSplit[#itemSplit + 1] = 0
+    else
+      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
+    end
   end
 
   for index = 1, tonumber(itemSplit[13]) do
