@@ -15,14 +15,6 @@ test: node_modules
 changelog:
 	@git log -1 --pretty=%B | tail -n +3 | head -c -1
 
-.PHONY: zip
-zip:
-	rm -rf idTip
-	mkdir -p idTip
-	cp idTip.lua idTip.toc idTip
-	zip idTip-$(shell git describe --abbrev=0).zip idTip
-	rm -rf idTip
-
 .PHONY: update
 update: node_modules
 	npx updates -cu
