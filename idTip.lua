@@ -89,6 +89,7 @@ local function addLine(tooltip, id, kind)
   end
 
   tooltip:AddDoubleLine(left, right)
+  tooltip:Show()
 end
 
 local function add(tooltip, id, kind)
@@ -111,8 +112,6 @@ local function add(tooltip, id, kind)
       add(tooltip, data.lines[1].tooltipID, "spell")
     end
   end
-
-  tooltip:Show()
 end
 
 local function addByKind(tooltip, id, kind)
