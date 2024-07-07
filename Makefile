@@ -4,6 +4,7 @@ node_modules: package.json
 
 .PHONY: lint
 lint:
+	luarocks show luacheck >/dev/null || luarocks install luacheck
 	luacheck idTip.lua
 
 .PHONY: test
