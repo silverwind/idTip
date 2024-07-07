@@ -127,11 +127,7 @@ local function attachItemTooltip(tooltip, id)
   local itemSplit = {}
 
   for v in string.gmatch(itemString, "(%d*:?)") do
-    if v == ":" then
-      itemSplit[#itemSplit + 1] = 0
-    else
-      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
-    end
+    itemSplit[#itemSplit + 1] = v == ":" and 0 string.gsub(v, ":", "")
   end
 
   for index = 1, tonumber(itemSplit[13]) do
@@ -310,11 +306,11 @@ end
 
 -- Pet Journal team icon
 if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
-  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petID)
-    local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
-    if speciesID then
-      local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesID));
-      addLine(GameTooltip, speciesID, kinds.species);
+  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
+    local speciesId = select(1, C_PetJournal.GetPetInfoByPetID(petId));
+    if speciesId then
+      local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId));
+      addLine(GameTooltip, speciesId, kinds.species);
       addLine(GameTooltip, npcId, kinds.unit);
     end
   end)
@@ -323,7 +319,7 @@ end
 hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
   if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
   local unit = select(2, tooltip:GetUnit())
-  if unit then
+  if unit and UnitGUID then
     local guid = UnitGUID(unit) or ""
     local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
     if id and guid:match("%a+") ~= "Player" then addLine(GameTooltip, id, kinds.unit) end
