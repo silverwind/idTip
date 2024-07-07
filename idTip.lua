@@ -460,10 +460,10 @@ f:SetScript("OnEvent", function(_, _, addon)
 
     if not idTipConfig then idTipConfig = {} end
 
-    for key, value in pairs(defaults) do
+    for key, _ in pairs(defaults) do
       if type(idTipConfig[key]) ~= type(defaults[key]) then idTipConfig[key] = defaults[key] end
     end
-    for key, value in pairs(kinds) do
+    for key, _ in pairs(kinds) do
       if type(idTipConfig[key .. "Enabled"]) ~= "boolean" then
         idTipConfig[key .. "Enabled"] = true
       end
@@ -572,11 +572,11 @@ panel:SetScript("OnShow", function()
   title:SetPoint("TOPLEFT", 16, -16)
   title:SetText(addonName)
 
-  local checkBox = createCheckbox("Enabled", "enabled")
-  checkBox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+  local enabledCheckBox = createCheckbox("Enabled", "enabled")
+  enabledCheckBox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
 
   local kindsTitle = panel:CreateFontString("ARTWORK", nil, "GameFontNormal")
-  kindsTitle:SetPoint("TOPLEFT", checkBox, "BOTTOMLEFT", 0, -16)
+  kindsTitle:SetPoint("TOPLEFT", enabledCheckBox, "BOTTOMLEFT", 0, -16)
   kindsTitle:SetText("Types")
 
   local index = 0
