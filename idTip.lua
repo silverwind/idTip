@@ -219,11 +219,12 @@ if TooltipDataProcessor then
   end)
 end
 
-hook(GameTooltip, "SetAction", function(tooltip, slot)
-  if not GetActionInfo then return end
-  local kind, id = GetActionInfo(slot)
-  addLineByKind(tooltip, id, kind)
-end)
+if GetActionInfo then
+  hook(GameTooltip, "SetAction", function(tooltip, slot)
+    local kind, id = GetActionInfo(slot)
+    addLineByKind(tooltip, id, kind)
+  end)
+end
 
 local function onSetHyperlink(tooltip, link)
   local kind, id = string.match(link,"^(%a+):(%d+)")
@@ -232,23 +233,26 @@ end
 hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 hook(GameTooltip, "SetHyperlink", onSetHyperlink)
 
-hook(GameTooltip, "SetUnitBuff", function(tooltip, ...)
-  if not UnitBuff then return end
-  local id = select(10, UnitBuff(...))
-  addLine(tooltip, id, kinds.spell)
-end)
+if UnitBuff then
+  hook(GameTooltip, "SetUnitBuff", function(tooltip, ...)
+    local id = select(10, UnitBuff(...))
+    addLine(tooltip, id, kinds.spell)
+  end)
+end
 
-hook(GameTooltip, "SetUnitDebuff", function(tooltip, ...)
-  if not UnitDebuff then return end
-  local id = select(10, UnitDebuff(...))
-  addLine(tooltip, id, kinds.spell)
-end)
+if UnitDebuff then
+  hook(GameTooltip, "SetUnitDebuff", function(tooltip, ...)
+    local id = select(10, UnitDebuff(...))
+    addLine(tooltip, id, kinds.spell)
+  end)
+end
 
-hook(GameTooltip, "SetUnitAura", function(tooltip, ...)
-  if not UnitAura then return end
-  local id = select(10, UnitAura(...))
-  addLine(tooltip, id, kinds.spell)
-end)
+if UnitAura then
+  hook(GameTooltip, "SetUnitAura", function(tooltip, ...)
+    local id = select(10, UnitAura(...))
+    addLine(tooltip, id, kinds.spell)
+  end)
+end
 
 hook(GameTooltip, "SetSpellByID", function(tooltip, id)
   addLineByKind(tooltip, id, kinds.spell)
@@ -264,12 +268,13 @@ hookScript(GameTooltip, "OnTooltipSetSpell", function(tooltip)
   addLine(tooltip, id, kinds.spell)
 end)
 
-hook(_G, "SpellButton_OnEnter", function(btn)
-  if not SpellBook_GetSpellBookSlot then return end
-  local slot = SpellBook_GetSpellBookSlot(btn)
-  local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-  addLine(GameTooltip, spellID, kinds.spell)
-end)
+if SpellBook_GetSpellBookSlot then
+  hook(_G, "SpellButton_OnEnter", function(btn)
+    local slot = SpellBook_GetSpellBookSlot(btn)
+    local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
+    addLine(GameTooltip, spellID, kinds.spell)
+  end)
+end
 
 hook(GameTooltip, "SetRecipeResultItem", function(tooltip, id)
   addLine(tooltip, id, kinds.spell)
@@ -279,37 +284,41 @@ hook(GameTooltip, "SetRecipeRankInfo", function(tooltip, id)
   addLine(tooltip, id, kinds.spell)
 end)
 
-hook(GameTooltip, "SetArtifactPowerByID", function(tooltip, powerID)
-  if not C_ArtifactUI or not C_ArtifactUI.GetPowerInfo then return end
-  local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
-  addLine(tooltip, powerID, kinds.artifactpower)
-  addLine(tooltip, powerInfo.spellID, kinds.spell)
-end)
+if C_ArtifactUI and C_ArtifactUI.GetPowerInfo then
+  hook(GameTooltip, "SetArtifactPowerByID", function(tooltip, powerID)
+    local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
+    addLine(tooltip, powerID, kinds.artifactpower)
+    addLine(tooltip, powerInfo.spellID, kinds.spell)
+  end)
+end
 
-hook(GameTooltip, "SetTalent", function(tooltip, id)
-  if not GetTalentInfoByID then return end
-  local spellID = select(6, GetTalentInfoByID(id))
-  addLine(tooltip, id, kinds.talent)
-  addLine(tooltip, spellID, kinds.spell)
-end)
+if GetTalentInfoByID then
+  hook(GameTooltip, "SetTalent", function(tooltip, id)
+    local spellID = select(6, GetTalentInfoByID(id))
+    addLine(tooltip, id, kinds.talent)
+    addLine(tooltip, spellID, kinds.spell)
+  end)
+end
 
-hook(GameTooltip, "SetPvpTalent", function(tooltip, id)
-  if not GetPvpTalentInfoByID then return end
-  local spellID = select(6, GetPvpTalentInfoByID(id))
-  addLine(tooltip, id, kinds.talent)
-  addLine(tooltip, spellID, kinds.spell)
-end)
+if GetPvpTalentInfoByID then
+  hook(GameTooltip, "SetPvpTalent", function(tooltip, id)
+    local spellID = select(6, GetPvpTalentInfoByID(id))
+    addLine(tooltip, id, kinds.talent)
+    addLine(tooltip, spellID, kinds.spell)
+  end)
+end
 
 -- Pet Journal team icon
-hook(GameTooltip, "SetCompanionPet", function(_tooltip, petID)
-  if not C_PetJournal or not C_PetJournal.GetPetInfoByPetID then return end
-  local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
-  if speciesID then
-    local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesID));
-    addLine(GameTooltip, speciesID, kinds.species);
-    addLine(GameTooltip, npcId, kinds.unit);
-  end
-end)
+if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
+  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petID)
+    local speciesID = select(1, C_PetJournal.GetPetInfoByPetID(petID));
+    if speciesID then
+      local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesID));
+      addLine(GameTooltip, speciesID, kinds.species);
+      addLine(GameTooltip, npcId, kinds.unit);
+    end
+  end)
+end
 
 hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
   if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
@@ -444,34 +453,36 @@ f:SetScript("OnEvent", function(_, _, addon)
   end
 end)
 
-hook(_G, "PetBattleAbilityButton_OnEnter", function(btn)
-  if not C_PetBattles or not C_PetBattles.GetActivePet then return end
-  if not C_PetBattles or not C_PetBattles.GetAbilityInfo then return end
-  local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
-  if btn:GetEffectiveAlpha() > 0 then
-    local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, btn:GetID()))
+if C_PetBattles and C_PetBattles.GetActivePet and C_PetBattles.GetAbilityInfo then
+  hook(_G, "PetBattleAbilityButton_OnEnter", function(btn)
+    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
+    if btn:GetEffectiveAlpha() > 0 then
+      local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, btn:GetID()))
+      if id then
+        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
+        PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
+      end
+    end
+  end)
+end
+
+if C_PetBattles and C_PetBattles.GetAuraInfo then
+  hook(_G, "PetBattleAura_OnEnter", function(frame)
+    local parent = frame:GetParent()
+    local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
     if id then
       local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
       PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
     end
-  end
-end)
+  end)
+end
 
-hook(_G, "PetBattleAura_OnEnter", function(frame)
-  if not C_PetBattles or not C_PetBattles.GetAuraInfo then return end
-  local parent = frame:GetParent()
-  local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
-  if id then
-    local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
-    PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
-  end
-end)
-
-hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
-  if not C_CurrencyInfo or not C_CurrencyInfo.GetCurrencyListLink then return end
-  local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
-  addLine(tooltip, id, kinds.currency)
-end)
+if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then
+  hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
+    local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
+    addLine(tooltip, id, kinds.currency)
+  end)
+end
 
 hook(GameTooltip, "SetCurrencyByID", function(tooltip, id)
   addLine(tooltip, id, kinds.currency)
@@ -481,11 +492,12 @@ hook(GameTooltip, "SetCurrencyTokenByID", function(tooltip, id)
   addLine(tooltip, id, kinds.currency)
 end)
 
-hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
-  if not C_QuestLog or not C_QuestLog.GetQuestIDForLogIndex then return end
-  local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
-  addLine(GameTooltip, id, kinds.quest)
-end)
+if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then
+  hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
+    local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
+    addLine(GameTooltip, id, kinds.quest)
+  end)
+end
 
 hook(_G, "TaskPOI_OnEnter", function(tooltip)
   if tooltip and tooltip.questID then addLine(GameTooltip, tooltip.questID, kinds.quest) end
