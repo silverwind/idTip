@@ -1,4 +1,6 @@
 local hooksecurefunc, select, tonumber, _G = hooksecurefunc, select, tonumber, _G
+local addonName = ...
+
 local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
 local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
 local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
@@ -58,6 +60,7 @@ end
 
 local function addLine(tooltip, id, kind)
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
+  if not idTipConfig.enabled then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Abort when tooltip has no name or when :GetName throws
@@ -377,11 +380,83 @@ local function criteriaOnEnter(index)
   end
 end
 
--- Achievement Frame Tooltips
+if C_PetBattles and C_PetBattles.GetActivePet and C_PetBattles.GetAbilityInfo then
+  hook(_G, "PetBattleAbilityButton_OnEnter", function(btn)
+    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
+    if btn:GetEffectiveAlpha() > 0 then
+      local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, btn:GetID()))
+      if id then
+        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
+        PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
+      end
+    end
+  end)
+end
+
+if C_PetBattles and C_PetBattles.GetAuraInfo then
+  hook(_G, "PetBattleAura_OnEnter", function(frame)
+    local parent = frame:GetParent()
+    local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
+    if id then
+      local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
+      PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
+    end
+  end)
+end
+
+if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then
+  hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
+    local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
+    addLine(tooltip, id, kinds.currency)
+  end)
+end
+
+hook(GameTooltip, "SetCurrencyByID", function(tooltip, id)
+  addLine(tooltip, id, kinds.currency)
+end)
+
+hook(GameTooltip, "SetCurrencyTokenByID", function(tooltip, id)
+  addLine(tooltip, id, kinds.currency)
+end)
+
+if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then
+  hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
+    local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
+    addLine(GameTooltip, id, kinds.quest)
+  end)
+end
+
+hook(_G, "TaskPOI_OnEnter", function(tooltip)
+  if tooltip and tooltip.questID then addLine(GameTooltip, tooltip.questID, kinds.quest) end
+end)
+
+-- AreaPois (on the world map)
+hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
+  if tooltip and tooltip.areaPoiID then addLine(GameTooltip, tooltip.areaPoiID, kinds.areapoi) end
+end)
+
+-- Vignettes (on the world map)
+hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
+  if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then addLine(GameTooltip, tooltip.vignetteInfo.vignetteID, kinds.vignette) end
+end)
+
+-------------------------------------------------------------------------------
+-- Events
+-------------------------------------------------------------------------------
+
 local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, addon)
-  if addon == "Blizzard_AchievementUI" then
+  if addon == addonName then
+    local defaults = {enabled = true}
+    if not idTipConfig then idTipConfig = {} end
+
+    for key, value in pairs(defaults) do
+      if type(idTipConfig[key]) ~= type(defaults[key]) then idTipConfig[key] = defaults[key] end
+    end
+
+    DevTools_Dump(idTipConfig)
+  elseif addon == "Blizzard_AchievementUI" then
     if AchievementTemplateMixin then
       -- dragonflight
       hook(AchievementTemplateMixin, "OnEnter", achievementOnEnter)
@@ -457,62 +532,41 @@ f:SetScript("OnEvent", function(_, _, addon)
   end
 end)
 
-if C_PetBattles and C_PetBattles.GetActivePet and C_PetBattles.GetAbilityInfo then
-  hook(_G, "PetBattleAbilityButton_OnEnter", function(btn)
-    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
-    if btn:GetEffectiveAlpha() > 0 then
-      local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, btn:GetID()))
-      if id then
-        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
-        PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
-      end
-    end
-  end)
+-------------------------------------------------------------------------------
+-- Options panel
+-------------------------------------------------------------------------------
+
+local panel = CreateFrame("Frame")
+panel.name = addonName
+panel:Hide()
+
+panel:SetScript("OnShow", function()
+  local function createCheckbox(label, key)
+    local checkBox = CreateFrame("CheckButton", addonName .. "Check" .. label, panel, "InterfaceOptionsCheckButtonTemplate")
+    checkBox:SetChecked(idTipConfig[key])
+    checkBox:SetScript("OnClick", function(self)
+      local checked = self:GetChecked()
+      idTipConfig[key] = checked
+      if checked then PlaySound(856) else PlaySound(857) end
+    end)
+    checkBox.label = _G[checkBox:GetName() .. "Text"]
+    checkBox.label:SetText(label)
+    checkBox.tooltipText = label
+    return checkBox
+  end
+
+  local title = panel:CreateFontString("ARTWORK", nil, "GameFontNormalLarge")
+  title:SetPoint("TOPLEFT", 16, -16)
+  title:SetText(addonName)
+
+  local enabled = createCheckbox("Enabled", "enabled")
+  enabled:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
+
+  panel:SetScript("OnShow", nil)
+end)
+
+if InterfaceOptions_AddCategory then
+  InterfaceOptions_AddCategory(panel)
+else
+  Settings.RegisterAddOnCategory(select(1, Settings.RegisterCanvasLayoutCategory(panel, panel.name)));
 end
-
-if C_PetBattles and C_PetBattles.GetAuraInfo then
-  hook(_G, "PetBattleAura_OnEnter", function(frame)
-    local parent = frame:GetParent()
-    local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
-    if id then
-      local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
-      PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
-    end
-  end)
-end
-
-if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then
-  hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
-    local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
-    addLine(tooltip, id, kinds.currency)
-  end)
-end
-
-hook(GameTooltip, "SetCurrencyByID", function(tooltip, id)
-  addLine(tooltip, id, kinds.currency)
-end)
-
-hook(GameTooltip, "SetCurrencyTokenByID", function(tooltip, id)
-  addLine(tooltip, id, kinds.currency)
-end)
-
-if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then
-  hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
-    local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
-    addLine(GameTooltip, id, kinds.quest)
-  end)
-end
-
-hook(_G, "TaskPOI_OnEnter", function(tooltip)
-  if tooltip and tooltip.questID then addLine(GameTooltip, tooltip.questID, kinds.quest) end
-end)
-
--- AreaPois (on the world map)
-hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
-  if tooltip and tooltip.areaPoiID then addLine(GameTooltip, tooltip.areaPoiID, kinds.areapoi) end
-end)
-
--- Vignettes (on the world map)
-hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
-  if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then addLine(GameTooltip, tooltip.vignetteInfo.vignetteID, kinds.vignette) end
-end)
