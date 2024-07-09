@@ -587,8 +587,13 @@ panel:SetScript("OnShow", function()
   local rowHeight = 20
   local columnWidth = 140
   local rowNum = 10
-  for key, value in pairs(kinds) do
-    local checkBox = createCheckbox(value, key .. "Enabled")
+
+  local keys = {}
+  for key in pairs(kinds) do table.insert(keys, key) end
+  table.sort(keys)
+
+  for _, key in pairs(keys) do
+    local checkBox = createCheckbox(kinds[key], key .. "Enabled")
     local columnIndex = math.floor(index / rowNum)
     local offsetRight = columnIndex * columnWidth
     local offsetUp = -(index * rowHeight) + (rowHeight * rowNum  * columnIndex) - 16
