@@ -25,7 +25,7 @@ local kinds = {
   mount = "MountID",
   companion = "CompanionID",
   macro = "MacroID",
-  equipmentset = "EquipmentSetID",
+  set = "SetID",
   visual = "VisualID",
   source = "SourceID",
   species = "SpeciesID",
@@ -187,6 +187,11 @@ local function attachItemTooltip(tooltip, id)
     if expansionId and expansionId ~= 254 then -- always 254 on classic, therefor uninteresting
       add(tooltip, expansionId, "expansion")
     end
+
+    local setId = select(16, GetItemInfo(itemId))
+    if setId then
+      add(tooltip, setId, "set")
+    end
   end
 end
 
@@ -217,7 +222,7 @@ if TooltipDataProcessor then
     elseif data.type == Enum.TooltipDataType.Achievement then
       add(tooltip, data.id, "achievement")
     elseif data.type == Enum.TooltipDataType.EquipmentSet then
-      add(tooltip, data.id, "equipmentset")
+      add(tooltip, data.id, "set")
     elseif data.type == Enum.TooltipDataType.RecipeRankInfo then
       add(tooltip, data.id, "spell")
     elseif data.type == Enum.TooltipDataType.Totem then
