@@ -184,7 +184,7 @@ local function attachItemTooltip(tooltip, id)
     if #gems ~= 0 then add(tooltip, gems, "gem") end
 
     local expansionId = select(15, GetItemInfo(itemId))
-    if expansionId then
+    if expansionId and expansionId ~= 254 then -- always 254 on classic, therefor uninteresting
       add(tooltip, expansionId, "expansion")
     end
   end
