@@ -565,10 +565,9 @@ panel:SetScript("OnShow", function()
     checkBox:SetScript("OnClick", function(self)
       local checked = self:GetChecked()
       idTipConfig[key] = checked
-      if checked then PlaySound(856) else PlaySound(857) end
+      PlaySound(checked and 856 or 857)
     end)
-    checkBox.label = _G[checkBox:GetName() .. "Text"]
-    checkBox.label:SetText(label)
+    checkBox.Text:SetText(label)
     return checkBox
   end
 
@@ -584,9 +583,9 @@ panel:SetScript("OnShow", function()
   kindsTitle:SetText("Types")
 
   local index = 0
-  local rowHeight = 20
-  local columnWidth = 140
-  local rowNum = 10
+  local rowHeight = 24
+  local columnWidth = 180
+  local rowNum = 12
 
   local keys = {}
   for key in pairs(kinds) do table.insert(keys, key) end
