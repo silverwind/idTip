@@ -42,6 +42,10 @@ local function contains(table, element)
   return false
 end
 
+local function configKey(key)
+  return key .. "Enabled"
+end
+
 local function hook(table, fn, cb)
   if table and table[fn] then
     hooksecurefunc(table, fn, cb)
@@ -60,8 +64,7 @@ end
 
 local function addLine(tooltip, id, kind)
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
-  if idTipConfig and not idTipConfig.enabled then return end
-  if idTipConfig and not idTipConfig[kind .. "Enabled"] then return end
+  if idTipConfig and (not idTipConfig.enabled or not idTipConfig[configKey(kind)]) then return end
   if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Abort when tooltip has no name or when :GetName throws
@@ -470,8 +473,8 @@ f:SetScript("OnEvent", function(_, _, addon)
     end
 
     for key, _ in pairs(kinds) do
-      if type(idTipConfig[key .. "Enabled"]) ~= "boolean" then
-        idTipConfig[key .. "Enabled"] = true
+      if type(idTipConfig[configKey(key)]) ~= "boolean" then
+        idTipConfig[configKey(key)] = true
       end
     end
   elseif addon == "Blizzard_AchievementUI" then
@@ -592,7 +595,7 @@ panel:SetScript("OnShow", function()
   table.sort(keys)
 
   for _, key in pairs(keys) do
-    local checkBox = createCheckbox(kinds[key], key .. "Enabled")
+    local checkBox = createCheckbox(kinds[key], configKey(key))
     local columnIndex = math.floor(index / rowNum)
     local offsetRight = columnIndex * columnWidth
     local offsetUp = -(index * rowHeight) + (rowHeight * rowNum  * columnIndex) - 16
