@@ -70,7 +70,7 @@ local function addLine(tooltip, id, kind)
 
   -- Check if we already added to this tooltip
   local frame, text
-  for i = 1, 32 do
+  for i = tooltip:NumLines(), 1, -1 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
     if text and string.find(text, kinds[kind]) then return end
