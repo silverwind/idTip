@@ -1,9 +1,11 @@
 manual-changelog: CHANGELOG.txt
 ignore:
+  - "*.js"
+  - "*.json"
+  - "*.md"
+  - "*.ts"
+  - "*.txt"
+  - "*.yaml"
   - CHANGELOG.txt
   - LICENSE
   - Makefile
-  - package-lock.json
-  - package.json
-  - pkgmeta.yaml
-  - README.md
