@@ -96,10 +96,10 @@ local function add(tooltip, id, kind)
   addLine(tooltip, id, kind)
 
   -- add additional sub-kinds based on kind
-  if kind == "spell" and GetSpellTexture then
+  if kind == "spell" and GetSpellTexture and id then
     local iconId = GetSpellTexture(id)
     if iconId then add(tooltip, iconId, "icon") end
-  elseif kind == "item" and GetItemIconByID then
+  elseif kind == "item" and GetItemIconByID and id then
     local iconId = GetItemIconByID(id)
     if iconId then add(tooltip, iconId, "icon") end
     local spellId = select(2, GetItemSpell(id))
