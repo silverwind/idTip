@@ -36,6 +36,7 @@ local kinds = {
   object = "ObjectID",
 }
 
+-- https://warcraft.wiki.gg/wiki/Struct_TooltipData
 -- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 local kindsByID = {
   [0]  = "item", -- Item
@@ -51,7 +52,7 @@ local kindsByID = {
   [10] = "mount", -- Mount
   [11] = "spell", -- PetAction
   [12] = "achievement", -- Achievement
-  [13] = "", -- EnhancedConduit
+  [13] = "spell", -- EnhancedConduit
   [14] = "set", -- EquipmentSet
   [15] = "", -- InstanceLock
   [16] = "", -- PvPBrawl
