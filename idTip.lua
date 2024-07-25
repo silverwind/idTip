@@ -92,21 +92,36 @@ local function addLine(tooltip, id, kind)
   tooltip:Show()
 end
 
+local function isStringOrNumber(val)
+  local t = type(val)
+  return (t == "string") or (t == "number")
+end
+
+-- id here can also be a table of multiple ids like for visuals
+-- TODO: refactor to single id and dynamically extend ids in existing tooltip
 local function add(tooltip, id, kind)
   addLine(tooltip, id, kind)
 
-  -- add additional sub-kinds based on kind
-  if kind == "spell" and GetSpellTexture and id then
+  -- spell texture
+  if kind == "spell" and GetSpellTexture and isStringOrNumber(id) then
     local iconId = GetSpellTexture(id)
     if iconId then add(tooltip, iconId, "icon") end
-  elseif kind == "item" and GetItemIconByID and id then
+  end
+
+  -- item icon id
+  if kind == "item" and GetItemIconByID and isStringOrNumber(id) then
     local iconId = GetItemIconByID(id)
     if iconId then add(tooltip, iconId, "icon") end
+  end
+
+  -- item spell
+  if kind == "item" and GetItemSpell and isStringOrNumber(id) then
     local spellId = select(2, GetItemSpell(id))
-    if spellId then
-      add(tooltip, spellId, "spell")
-    end
-  elseif kind == "macro" and tooltip.GetPrimaryTooltipData then
+    if spellId then add(tooltip, spellId, "spell") end
+  end
+
+  -- macro spell
+  if kind == "macro" and tooltip.GetPrimaryTooltipData then
     data = tooltip:GetPrimaryTooltipData();
     if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
       add(tooltip, data.lines[1].tooltipID, "spell")
@@ -517,7 +532,7 @@ f:SetScript("OnEvent", function(_, _, addon)
       end
     end
   elseif addon == "Blizzard_Collections" then
-    hook(_G, "WardrobeCollectionFrame_SetAppearanceTooltip", function(_frame, sources)
+    hook(CollectionWardrobeUtil, "SetAppearanceTooltip", function(_frame, sources)
       local visualIDs = {}
       local sourceIDs = {}
       local itemIDs = {}
@@ -528,9 +543,13 @@ f:SetScript("OnEvent", function(_, _, addon)
         if sources[i].itemID and not contains(visualIDs, sources[i].itemID) then table.insert(itemIDs, sources[i].itemID) end
       end
 
-      if #visualIDs ~= 0 then add(GameTooltip, visualIDs, "visual") end
-      if #sourceIDs ~= 0 then add(GameTooltip, sourceIDs, "source") end
-      if #itemIDs ~= 0 then add(GameTooltip, itemIDs, "item") end
+      if #visualIDs == 1 then add(GameTooltip, visualIDs[1], "visual") end
+      if #sourceIDs == 1 then add(GameTooltip, sourceIDs[1], "source") end
+      if #itemIDs == 1 then add(GameTooltip, itemIDs[1], "item") end
+
+      if #visualIDs > 1 then add(GameTooltip, visualIDs, "visual") end
+      if #sourceIDs > 1 then add(GameTooltip, sourceIDs, "source") end
+      if #itemIDs > 1 then add(GameTooltip, itemIDs, "item") end
     end)
 
     -- Pet Journal selected pet info icon
