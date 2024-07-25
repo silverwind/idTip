@@ -33,6 +33,38 @@ local kinds = {
   areapoi = "AreaPoiID",
   vignette = "VignetteID",
   expansion = "ExpansionID",
+  object = "ObjectID",
+}
+
+-- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
+local kindsByID = {
+  [0]  = "item", -- Item
+  [1]  = "spell", -- Spell
+  [2]  = "unit", -- Unit
+  [3]  = "unit", -- Corpse
+  [4]  = "object", -- Object
+  [5]  = "currency", -- Currency
+  [6]  = "unit", -- BattlePet
+  [7]  = "spell", -- UnitAura
+  [8]  = "spell", -- AzeriteEssence
+  [9]  = "unit", -- CompanionPet
+  [10] = "mount", -- Mount
+  [11] = "spell", -- PetAction
+  [12] = "achievement", -- Achievement
+  [13] = "", -- EnhancedConduit
+  [14] = "set", -- EquipmentSet
+  [15] = "", -- InstanceLock
+  [16] = "", -- PvPBrawl
+  [17] = "spell", -- RecipeRankInfo
+  [18] = "spell", -- Totem
+  [19] = "item", -- Toy
+  [20] = "", -- CorruptionCleanser
+  [21] = "", -- MinimapMouseover
+  [22] = "", -- Flyout
+  [23] = "quest", -- Quest
+  [24] = "quest", -- QuestPartyProgress
+  [25] = "macro", -- Macro
+  [26] = "", -- Debug
 }
 
 local function contains(table, element)
@@ -212,44 +244,22 @@ local function attachItemTooltip(tooltip, id)
   end
 end
 
--- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
-    if data.type == Enum.TooltipDataType.Spell then
-      add(tooltip, data.id, "spell")
-    elseif data.type == Enum.TooltipDataType.Item then
-      attachItemTooltip(tooltip, data.id)
-    elseif data.type == Enum.TooltipDataType.Unit then
-      if data.guid then
-        local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-        if id and data.guid:match("%a+") ~= "Player" then
-          add(tooltip, id, "unit")
-        else
-          add(tooltip, data.id, "unit")
-        end
+    local kind = kindsByID[tonumber(data.type)]
+
+    if kind == "unit" and data.guid then
+      local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+      if id and data.guid:match("%a+") ~= "Player" then
+        add(tooltip, id, "unit")
+      else
+        add(tooltip, data.id, "unit")
       end
-      add(tooltip, data.id, "unit")
-    elseif data.type == Enum.TooltipDataType.Currency then
-      add(tooltip, data.id, "currency")
-    elseif data.type == Enum.TooltipDataType.UnitAura then
-      add(tooltip, data.id, "spell")
-    elseif data.type == Enum.TooltipDataType.Mount then
-      add(tooltip, data.id, "mount")
-    elseif data.type == Enum.TooltipDataType.Achievement then
-      add(tooltip, data.id, "achievement")
-    elseif data.type == Enum.TooltipDataType.EquipmentSet then
-      add(tooltip, data.id, "set")
-    elseif data.type == Enum.TooltipDataType.RecipeRankInfo then
-      add(tooltip, data.id, "spell")
-    elseif data.type == Enum.TooltipDataType.Totem then
-      add(tooltip, data.id, "spell")
-    elseif data.type == Enum.TooltipDataType.Toy then
-      add(tooltip, data.id, "item")
-    elseif data.type == Enum.TooltipDataType.Quest then
-      add(tooltip, data.id, "quest")
-    elseif data.type == Enum.TooltipDataType.Macro then
-      add(tooltip, data.id, "macro")
+    end
+
+    if kind then
+      add(tooltip, data.id, kind)
     end
   end)
 end
