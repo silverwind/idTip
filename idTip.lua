@@ -593,10 +593,9 @@ panel:SetScript("OnShow", function()
   local function createCheckbox(label, key)
     local checkBox = CreateFrame("CheckButton", addonName .. "Check" .. label, panel, "InterfaceOptionsCheckButtonTemplate")
     checkBox:SetChecked(idTipConfig[key])
-    checkBox:SetScript("OnClick", function(self)
+    checkBox:HookScript("OnClick", function(self)
       local checked = self:GetChecked()
       idTipConfig[key] = checked
-      PlaySound(checked and 856 or 857)
     end)
     checkBox.Text:SetText(label)
     return checkBox
@@ -615,8 +614,8 @@ panel:SetScript("OnShow", function()
 
   local index = 0
   local rowHeight = 24
-  local columnWidth = 180
-  local rowNum = 12
+  local columnWidth = 150
+  local rowNum = 7
 
   local keys = {}
   for key in pairs(kinds) do table.insert(keys, key) end
@@ -634,8 +633,21 @@ panel:SetScript("OnShow", function()
   panel:SetScript("OnShow", nil)
 end)
 
+local categoryId = nil
 if InterfaceOptions_AddCategory then
   InterfaceOptions_AddCategory(panel)
 elseif Settings and Settings.RegisterAddOnCategory and Settings.RegisterCanvasLayoutCategory then
-  Settings.RegisterAddOnCategory(select(1, Settings.RegisterCanvasLayoutCategory(panel, panel.name)));
+  local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
+  categoryId = category.ID
+  Settings.RegisterAddOnCategory(category);
+end
+
+SLASH_IDTIP1 = "/idtip"
+function SlashCmdList.IDTIP()
+  if InterfaceOptionsFrame_OpenToCategory then
+    InterfaceOptionsFrame_OpenToCategory(panel)
+    InterfaceOptionsFrame_OpenToCategory(panel)
+  elseif categoryId then
+    Settings.OpenToCategory(categoryId)
+  end
 end
