@@ -140,7 +140,7 @@ local function add(tooltip, id, kind)
     if iconId then add(tooltip, iconId, "icon") end
   end
 
-  -- item icon id
+  -- item icon
   if kind == "item" and GetItemIconByID and isStringOrNumber(id) then
     local iconId = GetItemIconByID(id)
     if iconId then add(tooltip, iconId, "icon") end
