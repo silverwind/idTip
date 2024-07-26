@@ -163,9 +163,9 @@ local function add(tooltip, id, kind)
 
   -- unit special handling
   if kind == "unit" and data.guid then
-    local id = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-    if id and data.guid:match("%a+") ~= "Player" then
-      add(tooltip, id, "unit")
+    local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+    if unitId and data.guid:match("%a+") ~= "Player" then
+      add(tooltip, unitId, "unit")
     else
       add(tooltip, data.id, "unit")
     end
