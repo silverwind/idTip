@@ -160,16 +160,6 @@ local function add(tooltip, id, kind)
       add(tooltip, data.lines[1].tooltipID, "spell")
     end
   end
-
-  -- unit special handling
-  if kind == "unit" and data.guid then
-    local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-    if unitId and data.guid:match("%a+") ~= "Player" then
-      add(tooltip, unitId, "unit")
-    else
-      add(tooltip, data.id, "unit")
-    end
-  end
 end
 
 local function addByKind(tooltip, id, kind)
@@ -260,7 +250,15 @@ if TooltipDataProcessor then
     if not data or not data.type then return end
     local kind = kindsByID[tonumber(data.type)]
 
-    if kind then
+    -- unit special handling
+    if kind == "unit" and data and data.guid then
+      local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
+      if unitId and data.guid:match("%a+") ~= "Player" then
+        add(tooltip, unitId, "unit")
+      else
+        add(tooltip, data.id, "unit")
+      end
+    elseif kind then
       add(tooltip, data.id, kind)
     end
   end)
