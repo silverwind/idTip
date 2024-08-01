@@ -172,18 +172,6 @@ local function addByKind(tooltip, id, kind)
   end
 end
 
-local function attachItemTooltip(tooltip, id)
-  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and GetItemLinkByGUID then
-    local link = GetItemLinkByGUID(tooltip.info.tooltipData.guid)
-    addItemInfo(tooltip, link)
-  elseif tooltip.GetItem then
-    local link = select(2, tooltip:GetItem())
-    addItemInfo(tooltip, link)
-  else
-    add(tooltip, id, "item")
-  end
-end
-
 local function addItemInfo(tooltip, link)
   local itemString = string.match(link, "item:([%-?%d:]+)")
   if not itemString then return end
@@ -244,6 +232,18 @@ local function addItemInfo(tooltip, link)
     if setId then
       add(tooltip, setId, "set")
     end
+  end
+end
+
+local function attachItemTooltip(tooltip, id)
+  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and GetItemLinkByGUID then
+    local link = GetItemLinkByGUID(tooltip.info.tooltipData.guid)
+    addItemInfo(tooltip, link)
+  elseif tooltip.GetItem then
+    local link = select(2, tooltip:GetItem())
+    addItemInfo(tooltip, link)
+  else
+    add(tooltip, id, "item")
   end
 end
 
