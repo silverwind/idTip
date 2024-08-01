@@ -7,6 +7,7 @@ local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or Ge
 local GetItemGem = (C_Item and C_Item.GetItemGem) and C_Item.GetItemGem or GetItemGem
 local GetItemSpell = (C_Item and C_Item.GetItemSpell) and C_Item.GetItemSpell or GetItemSpell
 local GetRecipeReagentItemLink = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink) and C_TradeSkillUI.GetRecipeReagentItemLink or GetTradeSkillReagentItemLink
+local GetItemLinkByGUID = (C_Item and C_Item.GetItemLinkByGUID) and C_Item.GetItemLinkByGUID
 
 local kinds = {
   spell = "SpellID",
@@ -172,17 +173,18 @@ local function addByKind(tooltip, id, kind)
 end
 
 local function attachItemTooltip(tooltip, id)
-  local link
-  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and C_Item and C_Item.GetItemLinkByGUID then
-    link = C_Item.GetItemLinkByGUID(tooltip.info.tooltipData.guid)
+  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and GetItemLinkByGUID then
+    local link = GetItemLinkByGUID(tooltip.info.tooltipData.guid)
+    addItemInfo(tooltip, link)
   elseif tooltip.GetItem then
-    link = select(2, tooltip:GetItem())
+    local link = select(2, tooltip:GetItem())
+    addItemInfo(tooltip, link)
   else
     add(tooltip, id, "item")
-    return
   end
-  if not link then return end
+end
 
+local function addItemInfo(tooltip, link)
   local itemString = string.match(link, "item:([%-?%d:]+)")
   if not itemString then return end
 
@@ -258,6 +260,9 @@ if TooltipDataProcessor then
       else
         add(tooltip, data.id, "unit")
       end
+    elseif kind == "item" and data and data.guid and GetItemLinkByGUID then
+      local link = GetItemLinkByGUID(data.guid)
+      addItemInfo(tooltip, link)
     elseif kind then
       add(tooltip, data.id, kind)
     end
