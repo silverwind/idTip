@@ -35,6 +35,13 @@ local kinds = {
   vignette = "VignetteID",
   expansion = "ExpansionID",
   object = "ObjectID",
+  traitnode = "TraitNodeID",
+  traitentry = "TraitEntryID",
+  traitdef = "TraitDefinitionID",
+}
+
+local defaultDisabledKinds = {
+  "traitnode", "traitentry", "traitdef",
 }
 
 -- https://warcraft.wiki.gg/wiki/Struct_TooltipData
@@ -289,6 +296,17 @@ if GetActionInfo then
   end)
 end
 
+if TalentDisplayMixin then
+  hook(TalentDisplayMixin, "SetTooltipInternal", function(btn)
+    if not btn then return end
+    add(GameTooltip, btn.entryID, "traitentry")
+    add(GameTooltip, btn.definitionID, "traitdef")
+    if btn.GetNodeInfo then
+      add(GameTooltip, btn:GetNodeInfo().ID, "traitnode")
+    end
+  end)
+end
+
 local function onSetHyperlink(tooltip, link)
   local kind, id = string.match(link,"^(%a+):(%d+)")
   addByKind(tooltip, id, kind)
@@ -516,7 +534,7 @@ f:SetScript("OnEvent", function(_, _, addon)
 
     for key, _ in pairs(kinds) do
       if type(idTipConfig[configKey(key)]) ~= "boolean" then
-        idTipConfig[configKey(key)] = true
+        idTipConfig[configKey(key)] = not contains(defaultDisabledKinds, key)
       end
     end
   elseif addon == "Blizzard_AchievementUI" then
@@ -633,7 +651,7 @@ panel:SetScript("OnShow", function()
   local index = 0
   local rowHeight = 24
   local columnWidth = 150
-  local rowNum = 7
+  local rowNum = 10
 
   local keys = {}
   for key in pairs(kinds) do table.insert(keys, key) end
