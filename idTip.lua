@@ -1,4 +1,3 @@
-local hooksecurefunc, select, tonumber, _G = hooksecurefunc, select, tonumber, _G
 local addonName = ...
 
 local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
