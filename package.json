@@ -1,7 +1,11 @@
 {
   "type": "module",
   "devDependencies": {
+    "@types/luaparse": "0.2.12",
+    "@types/node": "22.2.0",
     "luaparse": "0.3.1",
+    "typescript": "5.5.4",
+    "typescript-config-silverwind": "6.0.0",
     "versions": "12.1.2",
     "vitest": "2.0.4",
     "vitest-config-silverwind": "9.1.0"

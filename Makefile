@@ -6,6 +6,7 @@ node_modules: package.json
 lint:
 	luarocks show luacheck >/dev/null || luarocks install luacheck
 	luacheck idTip.lua
+	npx tsc
 
 .PHONY: test
 test: node_modules
