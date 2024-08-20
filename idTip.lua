@@ -440,7 +440,10 @@ local function criteriaOnEnter(index)
     local btn = frame:GetParent() and frame:GetParent():GetParent()
     if not btn or not btn.id then return end
     if not GetAchievementCriteriaInfo then return end
-    local criteriaId = select(10, GetAchievementCriteriaInfo(btn.id, frame.___index or index))
+    local numCriteria = GetAchievementNumCriteria(btn.id)
+    local index = frame.___index or index
+    if index > numCriteria then return end -- avoid error on some of the buttons like on "Level 70" achievement
+    local criteriaId = select(10, GetAchievementCriteriaInfo(btn.id, index))
     if criteriaId then
       if not GameTooltip:IsVisible() then
         GameTooltip:SetOwner(btn:GetParent(), "ANCHOR_NONE")
