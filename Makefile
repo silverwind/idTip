@@ -3,7 +3,7 @@ node_modules: package.json
 	@touch node_modules
 
 .PHONY: lint
-lint:
+lint: node_modules
 	luarocks show luacheck >/dev/null || luarocks install luacheck
 	luacheck idTip.lua
 	npx tsc
