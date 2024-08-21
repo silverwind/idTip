@@ -435,13 +435,13 @@ local function achievementOnEnter(btn)
   GameTooltip:Show()
 end
 
-local function criteriaOnEnter(index)
+local function criteriaOnEnter(enterIndex)
   return function(frame)
     if not GetAchievementCriteriaInfo then return end
     local btn = frame:GetParent() and frame:GetParent():GetParent()
     if not btn or not btn.id then return end
     local achievementId = btn.id
-    local index = frame.___index or index
+    local index = frame.___index or enterIndex
     if index > GetAchievementNumCriteria(achievementId) then return end -- avoid error on some of the buttons like on "Level 70" achievement
     local criteriaId = select(10, GetAchievementCriteriaInfo(achievementId, index))
     if criteriaId then
