@@ -122,7 +122,7 @@ local function addLine(tooltip, id, kind)
   local left, right
   if type(id) == "table" then
     left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. "s" .. FONT_COLOR_CODE_CLOSE
-    right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ", ") .. FONT_COLOR_CODE_CLOSE
+    right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ",") .. FONT_COLOR_CODE_CLOSE
   else
     left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. FONT_COLOR_CODE_CLOSE
     right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
