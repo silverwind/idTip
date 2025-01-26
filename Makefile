@@ -16,6 +16,10 @@ test: node_modules
 changelog:
 	@git log -1 --pretty=%B | tail -n +3 | head -c -1
 
+.PHONY: toc
+toc:
+	bash toc.sh
+
 .PHONY: update
 update: node_modules
 	npx updates -cu
