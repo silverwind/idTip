@@ -15,7 +15,6 @@ jobs:
       - uses: leafo/gh-actions-luarocks@v4
       - run: make lint
       - run: make test
-      - run: make test
       - run: make changelog > CHANGELOG.txt
       - uses: BigWigsMods/packager@v2
         env:

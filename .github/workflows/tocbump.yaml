@@ -1,0 +1,24 @@
+name: tocbump
+on: {schedule: [{cron: "30 4 * * *"}]}
+
+jobs:
+  main:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: write
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: latest
+      - run: make toc
+      - run: |
+          if [[ $(git status --porcelain --untracked-files=no) ]]; then
+            git fetch --unshallow --quiet --tags
+            git config user.name "github-actions[bot]"
+            git config user.email "41898282+github-actions[bot]@users.noreply.github.com"
+            git commit -am "update toc"
+            make patch
+          else
+            echo "Nothing to commit"
+          fi
