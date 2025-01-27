@@ -1,5 +1,8 @@
 name: tocbump
-on: {schedule: [{cron: "30 4 * * *"}]}
+
+on:
+  schedule:
+    - cron: "30 4 * * *"
 
 jobs:
   main:
@@ -20,6 +23,9 @@ jobs:
             git commit -am "update toc"
             make patch
             git push --tags origin master
+            echo "DO_RELEASE=true" >> $GITHUB_ENV
           else
             echo "Nothing to commit"
           fi
+      - uses: ./.github/workflows/release.yaml@master
+        if: ${{ env.DO_RELEASE == 'true' }}
