@@ -23,7 +23,7 @@ jobs:
             git commit -am "update toc"
             make patch
             git push --tags origin master
-            echo "DO_RELEASE=true" >> $GITHUB_ENV
+            echo "DO_RELEASE=true" >> "$GITHUB_ENV"
           else
             echo "Nothing to commit"
           fi
