@@ -19,6 +19,6 @@ VERSION_STRING="$(echo -e \
   "$(toc "wow_classic_ptr")\n" \
   "$(toc "wow_classic_era")\n" \
   "$(toc "wow_classic_era_ptr")\n" \
-  | sort -n | xargs | perl -p -e 's# #, #g')"
+  | sort -n | uniq | xargs | perl -p -e 's# #, #g')"
 
 perl -p -i -e "s|## Interface: .+|## Interface: $VERSION_STRING|" idTip.toc
