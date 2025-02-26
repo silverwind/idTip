@@ -27,5 +27,19 @@ jobs:
           else
             echo "Nothing to commit"
           fi
-      - uses: ./.github/workflows/release.yaml@master
+      - uses: leafo/gh-actions-lua@v10
         if: ${{ env.DO_RELEASE == 'true' }}
+      - uses: leafo/gh-actions-luarocks@v4
+        if: ${{ env.DO_RELEASE == 'true' }}
+      - run: make lint
+        if: ${{ env.DO_RELEASE == 'true' }}
+      - run: make test
+        if: ${{ env.DO_RELEASE == 'true' }}
+      - run: make changelog > CHANGELOG.txt
+        if: ${{ env.DO_RELEASE == 'true' }}
+      - uses: BigWigsMods/packager@v2
+        if: ${{ env.DO_RELEASE == 'true' }}
+        env:
+          CF_API_KEY: ${{ secrets.CF_API_KEY }}
+          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
+          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
