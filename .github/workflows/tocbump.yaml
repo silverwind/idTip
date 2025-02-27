@@ -13,6 +13,9 @@ jobs:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
+          # needed for the action to be able trigger other actions, e.g the release
+          # https://github.com/orgs/community/discussions/27028#discussioncomment-3254367
+          ssh-key: ${{ secrets.DEPLOY_KEY }}
       - uses: actions/setup-node@v4
         with:
           node-version: latest
@@ -24,23 +27,6 @@ jobs:
             git commit -am "update toc"
             make patch
             git push --tags origin master
-            echo "DO_RELEASE=true" >> "$GITHUB_ENV"
           else
             echo "Nothing to commit"
           fi
-      - uses: leafo/gh-actions-lua@v10
-        if: ${{ env.DO_RELEASE == 'true' }}
-      - uses: leafo/gh-actions-luarocks@v4
-        if: ${{ env.DO_RELEASE == 'true' }}
-      - run: make lint
-        if: ${{ env.DO_RELEASE == 'true' }}
-      - run: make test
-        if: ${{ env.DO_RELEASE == 'true' }}
-      - run: make changelog > CHANGELOG.txt
-        if: ${{ env.DO_RELEASE == 'true' }}
-      - uses: BigWigsMods/packager@v2
-        if: ${{ env.DO_RELEASE == 'true' }}
-        env:
-          CF_API_KEY: ${{ secrets.CF_API_KEY }}
-          WOWI_API_TOKEN: ${{ secrets.WOWI_API_TOKEN }}
-          GITHUB_OAUTH: ${{ secrets.GITHUB_TOKEN }}
