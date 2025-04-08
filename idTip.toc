@@ -1,4 +1,4 @@
-## Interface: 11506, 11507, 40402, 110100, 110100, 110105
+## Interface: 11507, 40402, 110100, 110100, 110105
 ## Title: idTip
 ## Version: 11.5.15
 ## Notes: Adds various IDs to tooltips
