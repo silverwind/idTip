@@ -19,7 +19,7 @@ VERSION_STRING="$(echo -e \
   "$(toc "wow_classic_ptr")\n" \
   "$(toc "wow_classic_era")\n" \
   "$(toc "wow_classic_era_ptr")\n" \
-  | sort -n | awk '{$1=$1};1' | uniq | xargs | perl -p -e 's# #, #g')"
+  | awk '{$1=$1};1' | sort -n | uniq | xargs | perl -p -e 's# #, #g')"
 
 if [[ "$VERSION_STRING" =~ ^[0-9,\ ]+$ ]]; then
   perl -p -i -e "s|## Interface: .+|## Interface: $VERSION_STRING|" idTip.toc
