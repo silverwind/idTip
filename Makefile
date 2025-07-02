@@ -43,6 +43,6 @@ major: node_modules
 .PHONY: chmod
 chmod:
 	@find . -type d -depth 1 -exec chmod 0755 {} \;
-	@find . -type f -depth 1 -exec chmod 0644 {} \;
+	@find . ! -path '*.sh' -type f -depth 1 -exec chmod 0644 {} \;
 	@find .github -type d -exec chmod 0755 {} \;
 	@find .github -type f -exec chmod 0644 {} \;
