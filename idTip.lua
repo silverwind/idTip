@@ -40,7 +40,7 @@ local kinds = {
 }
 
 local defaultDisabledKinds = {
-  "traitnode", "traitentry", "traitdef",
+  "bonus", "traitnode", "traitentry", "traitdef",
 }
 
 -- https://warcraft.wiki.gg/wiki/Struct_TooltipData
@@ -523,7 +523,8 @@ f:RegisterEvent("ADDON_LOADED")
 f:SetScript("OnEvent", function(_, _, addon)
   if addon == addonName then
     local defaults = {
-      enabled = true
+      enabled = true,
+      version = 1,
     }
 
     if not idTipConfig then idTipConfig = {} end
@@ -536,6 +537,12 @@ f:SetScript("OnEvent", function(_, _, addon)
       if type(idTipConfig[configKey(key)]) ~= "boolean" then
         idTipConfig[configKey(key)] = not contains(defaultDisabledKinds, key)
       end
+    end
+
+    -- config migrations
+    if idTipConfig.version == 1 then -- v1 to v2 - disable bonus kind
+      idTipConfig[configKey("bonus")] = false
+      idTipConfig.version = 2
     end
   elseif addon == "Blizzard_AchievementUI" then
     if AchievementTemplateMixin then
