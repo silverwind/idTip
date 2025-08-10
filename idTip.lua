@@ -627,7 +627,7 @@ panel:Hide()
 
 panel:SetScript("OnShow", function()
   local function createCheckbox(label, key)
-    local checkBox = CreateFrame("CheckButton", addonName .. "Check" .. label, panel, "InterfaceOptionsCheckButtonTemplate")
+    local checkBox = CreateFrame("CheckButton", addonName .. "Check" .. label, panel, "ChatConfigCheckButtonTemplate")
     checkBox:SetChecked(idTipConfig[key])
     checkBox:HookScript("OnClick", function(self)
       local checked = self:GetChecked()
