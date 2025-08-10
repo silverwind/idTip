@@ -119,16 +119,9 @@ local function addLine(tooltip, id, kind)
     if text and string.find(text, kinds[kind]) then return end
   end
 
-  local left, right
-  if type(id) == "table" then
-    left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. "s" .. FONT_COLOR_CODE_CLOSE
-    right = HIGHLIGHT_FONT_COLOR_CODE .. table.concat(id, ",") .. FONT_COLOR_CODE_CLOSE
-  else
-    left = NORMAL_FONT_COLOR_CODE .. kinds[kind] .. FONT_COLOR_CODE_CLOSE
-    right = HIGHLIGHT_FONT_COLOR_CODE .. id .. FONT_COLOR_CODE_CLOSE
-  end
-
-  tooltip:AddDoubleLine(left, right)
+  local left = kinds[kind] .. (type(id) == "table" and "s" or "")
+  local right = type(id) == "table" and table.concat(id, ",") or id
+  tooltip:AddDoubleLine(left, right, nil, nil, nil, WHITE_FONT_COLOR.r, WHITE_FONT_COLOR.g, WHITE_FONT_COLOR.b)
   tooltip:Show()
 end
 
