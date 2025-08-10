@@ -105,7 +105,6 @@ end
 local function addLine(tooltip, id, kind)
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
   if idTipConfig and (not idTipConfig.enabled or not idTipConfig[configKey(kind)]) then return end
-  if type(id) == "table" and #id == 1 then id = id[1] end
 
   -- Abort when tooltip has no name or when :GetName throws
   local ok, name = pcall(getTooltipName, tooltip)
@@ -119,8 +118,14 @@ local function addLine(tooltip, id, kind)
     if text and string.find(text, kinds[kind]) then return end
   end
 
-  local left = kinds[kind] .. (type(id) == "table" and "s" or "")
-  local right = type(id) == "table" and table.concat(id, ",") or id
+  local multiple = type(id) == "table"
+  if multiple and #id == 1 then
+    id = id[1]
+    multiple = false
+  end
+
+  local left = kinds[kind] .. (multiple and "s" or "")
+  local right = multiple and table.concat(id, ",") or id
   tooltip:AddDoubleLine(left, right, nil, nil, nil, WHITE_FONT_COLOR.r, WHITE_FONT_COLOR.g, WHITE_FONT_COLOR.b)
   tooltip:Show()
 end
