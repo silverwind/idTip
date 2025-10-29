@@ -1,12 +1,12 @@
 local addonName = ...
 
-local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
-local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
-local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
-local GetItemGem = (C_Item and C_Item.GetItemGem) and C_Item.GetItemGem or GetItemGem
-local GetItemSpell = (C_Item and C_Item.GetItemSpell) and C_Item.GetItemSpell or GetItemSpell
+local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture and not issecretvalue(C_Spell.GetSpellTexture)) and C_Spell.GetSpellTexture or GetSpellTexture
+local GetItemIconByID = (C_Item and C_Item.GetItemIconByID and not issecretvalue(C_Item.GetItemIconByID)) and C_Item.GetItemIconByID or GetItemIconByID
+local GetItemInfo = (C_Item and C_Item.GetItemInfo and not issecretvalue(C_Item.GetItemInfo)) and C_Item.GetItemInfo or GetItemInfo
+local GetItemGem = (C_Item and C_Item.GetItemGem and not issecretvalue(C_Item.GetItemGem)) and C_Item.GetItemGem or GetItemGem
+local GetItemSpell = (C_Item and C_Item.GetItemSpell and not issecretvalue(C_Item.GetItemSpell)) and C_Item.GetItemSpell or GetItemSpell
 local GetRecipeReagentItemLink = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink) and C_TradeSkillUI.GetRecipeReagentItemLink or GetTradeSkillReagentItemLink
-local GetItemLinkByGUID = (C_Item and C_Item.GetItemLinkByGUID) and C_Item.GetItemLinkByGUID
+local GetItemLinkByGUID = (C_Item and C_Item.GetItemLinkByGUID and not issecretvalue(C_Item.GetItemLinkByGUID)) and C_Item.GetItemLinkByGUID
 
 local kinds = {
   spell = "SpellID",
@@ -115,7 +115,7 @@ local function addLine(tooltip, id, kind)
   for i = tooltip:NumLines(), 1, -1 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
-    if text and string.find(text, kinds[kind]) then return end
+    if not issecretvalue(text) and text and string.find(text, kinds[kind]) then return end
   end
 
   local multiple = type(id) == "table"
@@ -262,7 +262,7 @@ end
 
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
-    if not data or not data.type then return end
+    if issecretvalue(data) or issecretvalue(data.type) or not data or not data.type then return end
     local kind = kindsByID[tonumber(data.type)]
 
     -- unit special handling
