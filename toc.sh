@@ -2,7 +2,7 @@
 set -euo pipefail
 
 function toc {
-  local version="$(nc us.version.battle.net 1119 <<< "v1/products/$1/versions" | awk -F "|" '/^us/{print $6}')"
+  local version="$(curl -fsSL "https://us.version.battle.net/v2/products/$1/versions" | awk -F "|" '/^us/{print $6}')"
   version="${version%.*}"
   if [[ "$version" == 1.* ]]; then
     version="${version/./}"
@@ -15,7 +15,9 @@ VERSION_STRING="$(echo -e \
   "$(toc "wow")\n" \
   "$(toc "wowt")\n" \
   "$(toc "wowxptr")\n" \
+  "$(toc "wow_beta")\n" \
   "$(toc "wow_classic")\n" \
+  "$(toc "wow_classic_beta")\n" \
   "$(toc "wow_classic_ptr")\n" \
   "$(toc "wow_classic_era")\n" \
   "$(toc "wow_classic_era_ptr")\n" \
