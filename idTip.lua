@@ -102,7 +102,13 @@ local function getTooltipName(tooltip)
   return tooltip:GetName() or nil
 end
 
+local function isSecret(value)
+  if not issecretvalue or not issecrettable then return false end
+  return issecretvalue(value) or issecrettable(value)
+end
+
 local function addLine(tooltip, id, kind)
+  if isSecret(id) then return end
   if not id or id == "" or not tooltip or not tooltip.GetName then return end
   if idTipConfig and (not idTipConfig.enabled or not idTipConfig[configKey(kind)]) then return end
 
@@ -115,6 +121,7 @@ local function addLine(tooltip, id, kind)
   for i = tooltip:NumLines(), 1, -1 do
     frame = _G[name .. "TextLeft" .. i]
     if frame then text = frame:GetText() end
+    if isSecret(text) then return end
     if text and string.find(text, kinds[kind]) then return end
   end
 
