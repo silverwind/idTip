@@ -379,7 +379,9 @@ end
 
 if GetTalentInfoByID then
   hook(GameTooltip, "SetTalent", function(tooltip, id)
-    local spellID = select(6, GetTalentInfoByID(id))
+    local ok, result = pcall(GetTalentInfoByID, id)
+    if not ok then return end
+    local spellID = select(6, result)
     add(tooltip, id, "talent")
     add(tooltip, spellID, "spell")
   end)
