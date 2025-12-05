@@ -11,6 +11,7 @@ function toc {
   echo "$version"
 }
 
+# 38000 = titan
 VERSION_STRING="$(echo -e \
   "$(toc "wow")\n" \
   "$(toc "wowt")\n" \
@@ -21,6 +22,7 @@ VERSION_STRING="$(echo -e \
   "$(toc "wow_classic_ptr")\n" \
   "$(toc "wow_classic_era")\n" \
   "$(toc "wow_classic_era_ptr")\n" \
+  "$(echo "38000")\n" \
   | awk '{$1=$1};1' | sort -n | uniq | xargs | perl -p -e "s# #, #g")"
 
 if [[ "$VERSION_STRING" =~ ^[0-9,\ ]+$ ]]; then
