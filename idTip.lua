@@ -270,6 +270,7 @@ end
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
+    if isSecret(data.type) then return end
     local kind = kindsByID[tonumber(data.type)]
 
     -- unit special handling
