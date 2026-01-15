@@ -7,7 +7,7 @@ lint: node_modules
 	luarocks show luacheck >/dev/null || luarocks install luacheck
 	luacheck idTip.lua
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1
-	npx tsc
+	npx tsgo
 
 .PHONY: test
 test: node_modules
