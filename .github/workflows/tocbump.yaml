@@ -16,6 +16,7 @@ jobs:
           # needed for the action to be able trigger other actions, e.g the release
           # https://github.com/orgs/community/discussions/27028#discussioncomment-3254367
           ssh-key: ${{ secrets.DEPLOY_KEY }}
+      - uses: pnpm/action-setup@v4
       - uses: actions/setup-node@v6
         with:
           node-version: latest
