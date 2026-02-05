@@ -1,5 +1,5 @@
 node_modules: package.json
-	npm install --no-save
+	pnpm install
 	@touch node_modules
 
 .PHONY: lint
@@ -7,11 +7,11 @@ lint: node_modules
 	luarocks show luacheck >/dev/null || luarocks install luacheck
 	luacheck idTip.lua
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1
-	npx tsgo
+	pnpm exec tsgo
 
 .PHONY: test
 test: node_modules
-	npx vitest
+	pnpm exec vitest
 
 .PHONY: changelog
 changelog:
@@ -23,22 +23,22 @@ toc:
 
 .PHONY: update
 update: node_modules
-	npx updates -cu
-	rm -rf node_modules package-lock.json
-	npm install
+	pnpm exec updates -cu
+	rm -rf node_modules pnpm-lock.yaml
+	pnpm install
 	@touch node_modules
 
 .PHONY: patch
 patch: node_modules
-	npx versions patch idTip.toc
+	pnpm exec versions patch idTip.toc
 
 .PHONY: minor
 minor: node_modules
-	npx versions minor idTip.toc
+	pnpm exec versions minor idTip.toc
 
 .PHONY: major
 major: node_modules
-	npx versions major idTip.toc
+	pnpm exec versions major idTip.toc
 
 .PHONY: chmod
 chmod:

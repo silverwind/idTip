@@ -10,5 +10,6 @@
     "versions": "14.0.3",
     "vitest": "4.0.17",
     "vitest-config-silverwind": "10.6.0"
-  }
+  },
+  "packageManager": "pnpm@10.28.2"
 }
