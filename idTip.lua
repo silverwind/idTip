@@ -37,6 +37,9 @@ local kinds = {
   traitnode = "TraitNodeID",
   traitentry = "TraitEntryID",
   traitdef = "TraitDefinitionID",
+  owner = "OwnerFrame",
+  slot = "SlotID",
+
 }
 
 local defaultDisabledKinds = {
@@ -73,6 +76,26 @@ local kindsByID = {
   [24] = "quest", -- QuestPartyProgress
   [25] = "macro", -- Macro
   [26] = "", -- Debug
+}
+local slots = {
+  Head = 1,
+  Neck = 2,
+  Shoulder=	3,
+  Shirt = 4,
+  Chest = 5,
+  Waist = 6,
+  Legs = 7,
+  Feet = 8,
+  Wrist = 9,
+  Hands = 10,
+  Finger0 =11,
+  Finger1 =12,
+  Trinket0 =13,
+  Trinket1 =14,
+  Back = 15,
+  Mainhand = 16,
+  Offhand = 17,
+  Tabard = 19,
 }
 
 local function contains(table, element)
@@ -146,6 +169,29 @@ end
 -- TODO: refactor to single id and dynamically extend ids in existing tooltip
 local function add(tooltip, id, kind)
   addLine(tooltip, id, kind)
+  -- shows ownerFrame name and if it's an equipment slot also shows the numeric id
+
+  local owner = tooltip:GetOwner()
+  if owner then
+    slotname = owner:GetName()
+    if slotname then
+      addLine(tooltip, slotname, "owner")
+      local prefix = slotname:gsub("Character", "")
+      if prefix == slotname then
+        prefix = slotname:gsub("Inspect", "")
+        if prefix == slotname then 
+          prefix=""
+        else
+          prefix="Inspect"
+        end
+      else
+        prefix="Character"
+      end
+      local slot = slotname:gsub(prefix, ""):gsub("Slot", "")
+      local index = slots[slot]
+      addLine(tooltip, index, "slot")
+    end
+  end  
 
   -- spell texture
   if kind == "spell" and GetSpellTexture and isStringOrNumber(id) then
