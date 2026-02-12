@@ -7,6 +7,7 @@
     "luaparse": "0.3.1",
     "typescript": "5.9.3",
     "typescript-config-silverwind": "14.0.0",
+    "updates-config-silverwind": "1.0.3",
     "versions": "14.0.3",
     "vitest": "4.0.17",
     "vitest-config-silverwind": "10.6.0"
