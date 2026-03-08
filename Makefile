@@ -4,7 +4,7 @@ node_modules: package.json
 
 .PHONY: lint
 lint: node_modules
-	luarocks show luacheck >/dev/null || luarocks install luacheck
+	luacheck --version >/dev/null 2>&1 || luarocks install luacheck
 	luacheck idTip.lua
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1
 	pnpm exec tsgo
