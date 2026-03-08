@@ -5,13 +5,13 @@ node_modules: package.json
 .PHONY: lint
 lint: node_modules
 	luacheck --version >/dev/null 2>&1 || luarocks install luacheck
-	luacheck idTip.lua
+	luacheck idTip.lua idTip_test.lua
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1
 	pnpm exec tsgo
 
 .PHONY: test
-test: node_modules
-	pnpm exec vitest
+test:
+	lua idTip_test.lua
 
 .PHONY: changelog
 changelog:
