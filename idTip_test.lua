@@ -228,19 +228,6 @@ assert(eventFrame, "Event frame not created")
 eventHandler = eventFrame._scripts["OnEvent"]
 assert(eventHandler, "OnEvent handler not set")
 
--- Helper: reset tooltip and mock state between tests
-local function reset()
-  env.GameTooltip:_reset()
-  env.ItemRefTooltip:_reset()
-  for k in pairs(mockState) do mockState[k] = nil end
-end
-
--- Helper: trigger ADDON_LOADED
-local function triggerAddonLoaded()
-  env.idTipConfig = nil
-  eventHandler(eventFrame, "ADDON_LOADED", "idTip")
-end
-
 -- Helper: get tooltip lines as simple table
 local function getLines(tooltip)
   local result = {}
@@ -248,6 +235,23 @@ local function getLines(tooltip)
     result[i] = tooltip:_line(i)
   end
   return result
+end
+
+-- Helper: find a tooltip line by its left label
+local function findLine(tooltip, label)
+  for _, line in ipairs(getLines(tooltip)) do
+    if line.left == label then return line end
+  end
+  return nil
+end
+
+-- Helper: reset state and init config before each test
+local function setup()
+  env.GameTooltip:_reset()
+  env.ItemRefTooltip:_reset()
+  for k in pairs(mockState) do mockState[k] = nil end
+  env.idTipConfig = nil
+  eventHandler(eventFrame, "ADDON_LOADED", "idTip")
 end
 
 -------------------------------------------------------------------------------
@@ -262,19 +266,19 @@ end)
 
 describe("config initialization", function()
   test("ADDON_LOADED creates default config", function()
-    triggerAddonLoaded()
+    setup()
     assertTrue(env.idTipConfig)
     assertEq(env.idTipConfig.enabled, true)
   end)
 
   test("config has version", function()
-    triggerAddonLoaded()
+    setup()
     -- After migration v1->v2, version should be 2
     assertEq(env.idTipConfig.version, 2)
   end)
 
   test("core kinds are enabled by default", function()
-    triggerAddonLoaded()
+    setup()
     assertEq(env.idTipConfig.spellEnabled, true)
     assertEq(env.idTipConfig.itemEnabled, true)
     assertEq(env.idTipConfig.unitEnabled, true)
@@ -285,12 +289,12 @@ describe("config initialization", function()
   end)
 
   test("bonus kind disabled by default", function()
-    triggerAddonLoaded()
+    setup()
     assertEq(env.idTipConfig.bonusEnabled, false)
   end)
 
   test("trait kinds disabled by default", function()
-    triggerAddonLoaded()
+    setup()
     assertEq(env.idTipConfig.traitnodeEnabled, false)
     assertEq(env.idTipConfig.traitentryEnabled, false)
     assertEq(env.idTipConfig.traitdefEnabled, false)
@@ -312,235 +316,129 @@ end)
 
 describe("spell tooltip via TooltipDataProcessor", function()
   test("adds SpellID", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {type = 1, id = 12345})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "SpellID")
-    assertEq(lines[1].right, 12345)
+    local line = findLine(env.GameTooltip, "SpellID")
+    assertEq(line.right, 12345)
   end)
 
   test("adds IconID when GetSpellTexture returns value", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     mockState.spellTexture = 999999
     tooltipCallback(env.GameTooltip, {type = 1, id = 12345})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "SpellID")
-    assertEq(lines[2].left, "IconID")
-    assertEq(lines[2].right, 999999)
+    assertEq(findLine(env.GameTooltip, "SpellID").right, 12345)
+    assertEq(findLine(env.GameTooltip, "IconID").right, 999999)
   end)
 end)
 
 describe("item tooltip via TooltipDataProcessor", function()
   test("adds ItemID for simple item (no GUID)", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {type = 0, id = 67890})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "ItemID")
-    assertEq(lines[1].right, 67890)
+    assertEq(findLine(env.GameTooltip, "ItemID").right, 67890)
   end)
 
   test("parses full item link via GetItemLinkByGUID", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     mockState.itemLink = "|Hitem:158075:5932:0:0:0:0:0:0:120:0:0:0:2:3524:1472|h[Vest]|h"
     env.idTipConfig.bonusEnabled = true
     tooltipCallback(env.GameTooltip, {type = 0, id = 158075, guid = "Item-0-0-0-0-158075"})
-    local lines = getLines(env.GameTooltip)
-    -- Should have ItemID
-    assertEq(lines[1].left, "ItemID")
-    assertEq(lines[1].right, "158075")
-    -- Should have EnchantID (position 2 = 5932)
-    assertEq(lines[2].left, "EnchantID")
-    assertEq(lines[2].right, "5932")
-    -- Should have BonusIDs (2 bonuses: 3524, 1472)
-    assertEq(lines[3].left, "BonusIDs")
-    assertEq(lines[3].right, "3524,1472")
+    assertEq(findLine(env.GameTooltip, "ItemID").right, "158075")
+    assertEq(findLine(env.GameTooltip, "EnchantID").right, "5932")
+    assertEq(findLine(env.GameTooltip, "BonusIDs").right, "3524,1472")
   end)
 
   test("parses item link without enchant or bonuses", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     -- Note: in WoW's Lua 5.1, "0" == 0 is true (coercion), so enchant "0" is
     -- skipped. In Lua 5.3+, "0" ~= 0, so it would still be added.
     -- Use an item link where enchant position is truly empty (consecutive colons).
     mockState.itemLink = "|Hitem:12345::0:0:0:0:0:0:0:0:0:0:0|h[Simple]|h"
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "ItemID")
-    assertEq(lines[1].right, "12345")
-    assertEq(#lines, 1)
+    assertEq(findLine(env.GameTooltip, "ItemID").right, "12345")
+    assertEq(env.GameTooltip:NumLines(), 1)
   end)
 
   test("parses item with expansion and set", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     mockState.itemLink = "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:0|h[Item]|h"
-    local info = {}
-    info[15] = 9 -- expansion ID (e.g. Dragonflight)
-    info[16] = 42 -- set ID
-    mockState.itemInfo = info
+    mockState.itemInfo = {[15] = 9, [16] = 42}
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "ItemID")
-    -- Find ExpansionID and SetID lines
-    local foundExpansion, foundSet = false, false
-    for _, line in ipairs(lines) do
-      if line.left == "ExpansionID" then
-        assertEq(line.right, 9)
-        foundExpansion = true
-      end
-      if line.left == "SetID" then
-        assertEq(line.right, 42)
-        foundSet = true
-      end
-    end
-    assertTrue(foundExpansion)
-    assertTrue(foundSet)
+    assertEq(findLine(env.GameTooltip, "ExpansionID").right, 9)
+    assertEq(findLine(env.GameTooltip, "SetID").right, 42)
   end)
 
   test("skips expansion 254 (classic)", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     mockState.itemLink = "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:0|h[Item]|h"
-    local info = {}
-    info[15] = 254 -- classic, should be skipped
-    mockState.itemInfo = info
+    mockState.itemInfo = {[15] = 254}
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    for _, line in ipairs(lines) do
-      if line.left == "ExpansionID" then
-        error("ExpansionID 254 should be skipped")
-      end
-    end
+    assertNil(findLine(env.GameTooltip, "ExpansionID"))
   end)
 
   test("parses item with gems", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     mockState.itemLink = "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:0|h[Item]|h"
     mockState.itemGems = {
       [1] = "|Hitem:154128:0:0:0|h[Gem]|h",
       [2] = "|Hitem:154129:0:0:0|h[Gem2]|h",
     }
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    local foundGem = false
-    for _, line in ipairs(lines) do
-      if line.left == "GemIDs" then
-        assertEq(line.right, "154128,154129")
-        foundGem = true
-      end
-    end
-    assertTrue(foundGem)
+    assertEq(findLine(env.GameTooltip, "GemIDs").right, "154128,154129")
   end)
 end)
 
 describe("unit tooltip via TooltipDataProcessor", function()
   test("extracts NPC ID from creature GUID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {
-      type = 2, id = 0,
-      guid = "Creature-0-1234-0-5678-69-0000123ABC",
-    })
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "NPC ID")
-    assertEq(lines[1].right, 69)
+    setup()
+    tooltipCallback(env.GameTooltip, {type = 2, id = 0, guid = "Creature-0-1234-0-5678-69-0000123ABC"})
+    assertEq(findLine(env.GameTooltip, "NPC ID").right, 69)
   end)
 
   test("skips Player GUID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {
-      type = 2, id = 0,
-      guid = "Player-1234-0000ABCD",
-    })
-    local lines = getLines(env.GameTooltip)
+    setup()
+    tooltipCallback(env.GameTooltip, {type = 2, id = 0, guid = "Player-1234-0000ABCD"})
     -- Player GUID has no NPC-like pattern match, falls through to data.id
-    assertEq(lines[1].left, "NPC ID")
-    assertEq(lines[1].right, 0)
+    assertEq(findLine(env.GameTooltip, "NPC ID").right, 0)
   end)
 
   test("handles vehicle GUID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {
-      type = 2, id = 0,
-      guid = "Vehicle-0-1234-0-5678-12345-0000ABCDEF",
-    })
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "NPC ID")
-    assertEq(lines[1].right, 12345)
+    setup()
+    tooltipCallback(env.GameTooltip, {type = 2, id = 0, guid = "Vehicle-0-1234-0-5678-12345-0000ABCDEF"})
+    assertEq(findLine(env.GameTooltip, "NPC ID").right, 12345)
   end)
 end)
 
 describe("other tooltip types via TooltipDataProcessor", function()
-  test("quest tooltip adds QuestID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {type = 23, id = 55001})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "QuestID")
-    assertEq(lines[1].right, 55001)
-  end)
-
-  test("currency tooltip adds CurrencyID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {type = 5, id = 1234})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "CurrencyID")
-    assertEq(lines[1].right, 1234)
-  end)
-
-  test("mount tooltip adds MountID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {type = 10, id = 777})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "MountID")
-    assertEq(lines[1].right, 777)
-  end)
-
-  test("achievement tooltip adds AchievementID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {type = 12, id = 9999})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "AchievementID")
-    assertEq(lines[1].right, 9999)
-  end)
-
-  test("object tooltip adds ObjectID", function()
-    reset()
-    triggerAddonLoaded()
-    tooltipCallback(env.GameTooltip, {type = 4, id = 300})
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "ObjectID")
-    assertEq(lines[1].right, 300)
-  end)
+  local typeCases = {
+    {type = 23, id = 55001, label = "QuestID"},
+    {type = 5,  id = 1234,  label = "CurrencyID"},
+    {type = 10, id = 777,   label = "MountID"},
+    {type = 12, id = 9999,  label = "AchievementID"},
+    {type = 4,  id = 300,   label = "ObjectID"},
+  }
+  for _, c in ipairs(typeCases) do
+    test("type " .. c.type .. " adds " .. c.label, function()
+      setup()
+      tooltipCallback(env.GameTooltip, {type = c.type, id = c.id})
+      assertEq(findLine(env.GameTooltip, c.label).right, c.id)
+    end)
+  end
 
   test("ignores unknown tooltip types", function()
-    reset()
-    triggerAddonLoaded()
-    -- type 15 = InstanceLock, maps to "" (empty), no kind
+    setup()
     tooltipCallback(env.GameTooltip, {type = 15, id = 100})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
 
   test("ignores nil data", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, nil)
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
 
   test("ignores data without type", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {id = 123})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
@@ -548,93 +446,63 @@ end)
 
 describe("config controls", function()
   test("disabled config prevents tooltip additions", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     env.idTipConfig.enabled = false
     tooltipCallback(env.GameTooltip, {type = 1, id = 12345})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
 
   test("disabled kind prevents that kind", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     env.idTipConfig.spellEnabled = false
     tooltipCallback(env.GameTooltip, {type = 1, id = 12345})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
 
   test("other kinds still work when one is disabled", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     env.idTipConfig.spellEnabled = false
-    tooltipCallback(env.GameTooltip, {type = 23, id = 55001}) -- quest
-    local lines = getLines(env.GameTooltip)
-    assertEq(lines[1].left, "QuestID")
+    tooltipCallback(env.GameTooltip, {type = 23, id = 55001})
+    assertEq(findLine(env.GameTooltip, "QuestID").right, 55001)
   end)
 end)
 
 describe("duplicate prevention", function()
   test("same kind is not added twice", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {type = 23, id = 100})
     tooltipCallback(env.GameTooltip, {type = 23, id = 100})
-    -- Should only have one QuestID line
-    local count = 0
-    for _, line in ipairs(getLines(env.GameTooltip)) do
-      if line.left == "QuestID" then count = count + 1 end
-    end
-    assertEq(count, 1)
+    assertEq(env.GameTooltip:NumLines(), 1)
   end)
 end)
 
 describe("multiple IDs", function()
   test("single-element table treated as single value", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     env.idTipConfig.bonusEnabled = true
     mockState.itemLink = "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:1:9999|h[Item]|h"
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    local found = false
-    for _, line in ipairs(lines) do
-      if line.left == "BonusID" then -- singular, not "BonusIDs"
-        assertEq(line.right, "9999")
-        found = true
-      end
-    end
-    assertTrue(found)
+    assertEq(findLine(env.GameTooltip, "BonusID").right, "9999") -- singular, not "BonusIDs"
   end)
 
   test("multiple bonuses use plural label", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     env.idTipConfig.bonusEnabled = true
     mockState.itemLink = "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:3:100:200:300|h[Item]|h"
     tooltipCallback(env.GameTooltip, {type = 0, id = 12345, guid = "Item-0-0-0-0-12345"})
-    local lines = getLines(env.GameTooltip)
-    local found = false
-    for _, line in ipairs(lines) do
-      if line.left == "BonusIDs" then
-        assertEq(line.right, "100,200,300")
-        found = true
-      end
-    end
-    assertTrue(found)
+    assertEq(findLine(env.GameTooltip, "BonusIDs").right, "100,200,300")
   end)
 end)
 
 describe("edge cases", function()
   test("nil id produces no tooltip line", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {type = 1, id = nil})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
 
   test("empty string id produces no tooltip line", function()
-    reset()
-    triggerAddonLoaded()
+    setup()
     tooltipCallback(env.GameTooltip, {type = 1, id = ""})
     assertEq(env.GameTooltip:NumLines(), 0)
   end)
