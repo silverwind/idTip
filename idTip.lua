@@ -166,10 +166,24 @@ local function add(tooltip, id, kind)
   end
 
   -- macro spell
-  if kind == "macro" and tooltip.GetPrimaryTooltipData then
-    local data = tooltip:GetPrimaryTooltipData();
-    if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
-      add(tooltip, data.lines[1].tooltipID, "spell")
+  if kind == "macro" then
+    if tooltip.GetPrimaryTooltipData then
+      local data = tooltip:GetPrimaryTooltipData();
+      if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
+        add(tooltip, data.lines[1].tooltipID, "spell")
+        return
+      end
+    end
+    if tooltip.GetSpell then
+      local spellID = select(2, tooltip:GetSpell())
+      if spellID then
+        add(tooltip, spellID, "spell")
+        return
+      end
+    end
+    if GetMacroSpell and isStringOrNumber(id) then
+      local spellID = select(3, GetMacroSpell(id))
+      if spellID then add(tooltip, spellID, "spell") end
     end
   end
 end
@@ -349,8 +363,7 @@ hook(_G, "SetItemRef", function(link)
   add(ItemRefTooltip, id, "spell")
 end)
 
--- hooksecurefunc on global function instead of hookScript to avoid taint
-hook(_G, "GameTooltip_OnTooltipSetSpell", function(tooltip)
+hookScript(GameTooltip, "OnTooltipSetSpell", function(tooltip)
   local id = select(2, tooltip:GetSpell())
   add(tooltip, id, "spell")
 end)
@@ -409,7 +422,7 @@ if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
   end)
 end
 
-hook(_G, "GameTooltip_OnTooltipSetUnit", function(tooltip)
+hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
   if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
   local unit = select(2, tooltip:GetUnit())
   if unit and UnitGUID then
@@ -430,7 +443,40 @@ end)
 local function onSetItem(tooltip)
   attachItemTooltip(tooltip, nil)
 end
-hook(_G, "GameTooltip_OnTooltipSetItem", onSetItem)
+hookScript(GameTooltip, "OnTooltipSetItem", onSetItem)
+
+-- Hook spell/item display on addon-created tooltip frames (e.g. ElvUI_SpellBookTooltip)
+local hookedTooltips = {[GameTooltip] = true}
+local function hookAddonTooltip(tooltip)
+  if not tooltip or hookedTooltips[tooltip] then return end
+  hookedTooltips[tooltip] = true
+  hook(tooltip, "SetSpellBookItem", function(tt, slot, bookType)
+    if GetSpellBookItemInfo then
+      local spellID = select(2, GetSpellBookItemInfo(slot, bookType))
+      if spellID then add(tt, spellID, "spell") end
+    end
+  end)
+  hook(tooltip, "SetSpellByID", function(tt, id)
+    addByKind(tt, id, "spell")
+  end)
+  hookScript(tooltip, "OnTooltipSetItem", onSetItem)
+  hookScript(tooltip, "OnTooltipSetSpell", function(tip)
+    if tip.GetSpell then
+      local id = select(2, tip:GetSpell())
+      add(tip, id, "spell")
+    end
+  end)
+end
+
+local function scanAddonTooltips()
+  local f = EnumerateFrames()
+  while f do
+    if f:IsObjectType("GameTooltip") and not hookedTooltips[f] then
+      hookAddonTooltip(f)
+    end
+    f = EnumerateFrames(f)
+  end
+end
 
 local function achievementOnEnter(btn)
   GameTooltip:SetOwner(btn, "ANCHOR_NONE")
@@ -524,9 +570,17 @@ end)
 -- Events
 -------------------------------------------------------------------------------
 
+local loggedIn = false
 local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
-f:SetScript("OnEvent", function(_, _, addon)
+f:RegisterEvent("PLAYER_LOGIN")
+f:SetScript("OnEvent", function(_, event, addon)
+  if event == "PLAYER_LOGIN" then
+    loggedIn = true
+    scanAddonTooltips()
+    return
+  end
+  if loggedIn then scanAddonTooltips() end
   if addon == addonName then
     local defaults = {
       enabled = true,
