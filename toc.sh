@@ -2,7 +2,11 @@
 set -euo pipefail
 
 function toc {
-  VERSIONS="$(curl -s https://us.version.battle.net/v2/products/$1/versions | awk -F "|" '/^[a-z]{2}\|/{print $6}')"
+  VERSIONS="$(curl -fsS https://us.version.battle.net/v2/products/$1/versions | awk -F "|" '/^[a-z]{2}\|/{print $6}')"
+  if [[ -z "$VERSIONS" ]]; then
+    echo "No versions found for $1" >&2
+    exit 1
+  fi
   for VERSION in $VERSIONS; do
     VERSION="${VERSION%.*}"
     if [[ "$VERSION" == 1.* ]] || [[ "$VERSION" == 3.* ]]; then
