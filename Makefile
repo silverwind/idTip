@@ -30,15 +30,15 @@ update: node_modules
 
 .PHONY: patch
 patch: node_modules
-	pnpm exec versions patch idTip.toc
+	pnpm exec versions -R patch idTip.toc
 
 .PHONY: minor
 minor: node_modules
-	pnpm exec versions minor idTip.toc
+	pnpm exec versions -R minor idTip.toc
 
 .PHONY: major
 major: node_modules
-	pnpm exec versions major idTip.toc
+	pnpm exec versions -R major idTip.toc
 
 .PHONY: chmod
 chmod:
