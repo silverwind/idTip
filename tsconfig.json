@@ -12,6 +12,7 @@
   "compilerOptions": {
     "strict": true,
     "types": [
+      "jest-extended",
       "node",
     ],
   },
