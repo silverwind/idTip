@@ -20,6 +20,8 @@ jobs:
           cache: pnpm
           node-version: latest
       - uses: leafo/gh-actions-lua@v13
+        with:
+          luaVersion: "5.4"
       - uses: leafo/gh-actions-luarocks@v6
       - run: make lint
       - run: make test
