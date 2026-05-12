@@ -1,13 +1,13 @@
 {
   "type": "module",
   "devDependencies": {
-    "@types/node": "25.6.0",
-    "@typescript/native-preview": "7.0.0-dev.20260413.1",
+    "@types/node": "25.7.0",
+    "@typescript/native-preview": "7.0.0-dev.20260512.1",
     "jest-extended": "7.0.0",
-    "typescript": "6.0.2",
-    "typescript-config-silverwind": "17.0.0",
-    "updates-config-silverwind": "2.1.0",
-    "versions": "14.3.1"
+    "typescript": "6.0.3",
+    "typescript-config-silverwind": "18.0.0",
+    "updates-config-silverwind": "3.0.2",
+    "versions": "15.0.3"
   },
-  "packageManager": "pnpm@10.33.0"
+  "packageManager": "pnpm@10.33.4"
 }
