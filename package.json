@@ -6,6 +6,7 @@
     "jest-extended": "7.0.0",
     "typescript": "6.0.3",
     "typescript-config-silverwind": "18.0.0",
+    "updates": "17.17.2",
     "updates-config-silverwind": "3.0.2",
     "versions": "15.0.3"
   },

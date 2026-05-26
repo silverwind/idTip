@@ -23,6 +23,9 @@ importers:
       typescript-config-silverwind:
         specifier: 18.0.0
         version: 18.0.0
+      updates:
+        specifier: 17.17.2
+        version: 17.17.2
       updates-config-silverwind:
         specifier: 3.0.2
         version: 3.0.2(prettier@3.8.3)
@@ -170,6 +173,11 @@ packages:
     peerDependencies:
       prettier: '*'
 
+  updates@17.17.2:
+    resolution: {integrity: sha512-gOwGrBYBvHVS+OiaUFRuilrmf/P8eYVmKUrkq7W3fvYUgpBsNKgfZo/CPhLKBa7xEFiEuMwMxTkiKsd9mn8pEw==}
+    engines: {node: '>=22'}
+    hasBin: true
+
   versions@15.0.3:
     resolution: {integrity: sha512-jN9A/S+tBxRbslAtqGIBZUkuM8UeWMdZadAZzgsg+MlMY/B8SPiY5PtJs3Puj6R2+N7RU+ZmI3lfyIvd8Y8M5A==}
     engines: {node: '>=22'}
@@ -279,5 +287,7 @@ snapshots:
   updates-config-silverwind@3.0.2(prettier@3.8.3):
     dependencies:
       prettier: 3.8.3
+
+  updates@17.17.2: {}
 
   versions@15.0.3: {}

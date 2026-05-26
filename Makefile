@@ -22,7 +22,7 @@ toc:
 	bash toc.sh
 
 .PHONY: update
-update: node_modules
+update: node_modules update-actions
 	pnpm exec updates -cu
 	rm -rf node_modules pnpm-lock.yaml
 	pnpm install
@@ -46,3 +46,7 @@ chmod:
 	@find . ! -path '*.sh' -type f -depth 1 -exec chmod 0644 {} \;
 	@find .github -type d -exec chmod 0755 {} \;
 	@find .github -type f -exec chmod 0644 {} \;
+
+.PHONY: update-actions
+update-actions: node_modules
+	pnpm exec updates -u -M actions
