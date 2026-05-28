@@ -31,17 +31,9 @@ update-js: node_modules
 	pnpm install
 	@touch node_modules
 
-.PHONY: patch
-patch: node_modules
-	pnpm exec versions -R patch idTip.toc
-
-.PHONY: minor
-minor: node_modules
-	pnpm exec versions -R minor idTip.toc
-
-.PHONY: major
-major: node_modules
-	pnpm exec versions -R major idTip.toc
+.PHONY: patch minor major
+patch minor major: node_modules
+	pnpm exec versions -R $@ idTip.toc
 
 .PHONY: chmod
 chmod:
