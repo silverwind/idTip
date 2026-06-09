@@ -27,8 +27,8 @@ importers:
         specifier: 17.17.2
         version: 17.17.2
       updates-config-silverwind:
-        specifier: 3.0.2
-        version: 3.0.2(prettier@3.8.3)
+        specifier: 4.0.0
+        version: 4.0.0(prettier@3.8.3)
       versions:
         specifier: 15.0.3
         version: 15.0.3
@@ -167,8 +167,8 @@ packages:
   undici-types@7.21.0:
     resolution: {integrity: sha512-w9IMgQrz4O0YN1LtB7K5P63vhlIOvC7opSmouCJ+ZywlPAlO9gIkJ+otk6LvGpAs2wg4econaCz3TvQ9xPoyuQ==}
 
-  updates-config-silverwind@3.0.2:
-    resolution: {integrity: sha512-5T/OOdMxvkvNgFpV5uTOcJujTmFfDoMS4yv9Y6SiK+48sA4nVcXPUqg7Ac3s/b41hmC2E225EEotlxtBY8PlYg==}
+  updates-config-silverwind@4.0.0:
+    resolution: {integrity: sha512-5I708X8cDr244ApYk6Yvdgo+DPzNP8FK4QzQphgutLV/+i3T8vli/G1UGee8OlLAD64TgX7ytuNSD3A2q2H8YQ==}
     engines: {node: '>=22'}
     peerDependencies:
       prettier: '*'
@@ -284,7 +284,7 @@ snapshots:
 
   undici-types@7.21.0: {}
 
-  updates-config-silverwind@3.0.2(prettier@3.8.3):
+  updates-config-silverwind@4.0.0(prettier@3.8.3):
     dependencies:
       prettier: 3.8.3
 

@@ -1,0 +1,4 @@
+savePrefix: ''
+updateNotifier: false
+strictDepBuilds: false
+minimumReleaseAge: 0
