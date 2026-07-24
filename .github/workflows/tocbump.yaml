@@ -11,14 +11,14 @@ jobs:
   main:
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v6
+      - uses: actions/checkout@v7
         with:
           fetch-depth: 0
           # needed for the action to be able trigger other actions, e.g the release
           # https://github.com/orgs/community/discussions/27028#discussioncomment-3254367
           ssh-key: ${{ secrets.DEPLOY_KEY }}
       - uses: pnpm/action-setup@v6
-      - uses: actions/setup-node@v6
+      - uses: actions/setup-node@v7
         with:
           cache: pnpm
           node-version: latest
