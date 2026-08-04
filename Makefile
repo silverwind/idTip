@@ -33,7 +33,7 @@ update-js: node_modules
 
 .PHONY: patch minor major
 patch minor major: node_modules
-	pnpm exec versions -R $@ idTip.toc
+	pnpm exec versions $@ idTip.toc
 
 .PHONY: chmod
 chmod:
