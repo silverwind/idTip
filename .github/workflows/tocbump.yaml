@@ -3,6 +3,7 @@ name: tocbump
 on:
   schedule:
     - cron: "30 */6 * * *"
+  workflow_dispatch:
 
 permissions:
   contents: write
