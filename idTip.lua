@@ -37,6 +37,7 @@ local kinds = {
   traitnode = "TraitNodeID",
   traitentry = "TraitEntryID",
   traitdef = "TraitDefinitionID",
+  gossip = "GossipID",
 }
 
 local defaultDisabledKinds = {
@@ -564,6 +565,154 @@ end)
 -- Vignettes (on the world map)
 hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
   if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then add(GameTooltip, tooltip.vignetteInfo.vignetteID, "vignette") end
+end)
+
+local function addInfoLine(tooltip, label, value)
+  if value == nil or value == "" then return end
+  tooltip:AddDoubleLine(label, tostring(value), nil, nil, nil,
+    WHITE_FONT_COLOR.r, WHITE_FONT_COLOR.g, WHITE_FONT_COLOR.b)
+end
+
+local function enumName(enumTable, value)
+  if not enumTable or value == nil then return tostring(value) end
+  for name, v in pairs(enumTable) do
+    if v == value then return name .. " (" .. value .. ")" end
+  end
+  return tostring(value)
+end
+
+local function getQuestTagID(questID)
+  if not C_QuestLog or not C_QuestLog.GetQuestTagInfo then return nil end
+  local ok, info = pcall(C_QuestLog.GetQuestTagInfo, questID)
+  if not ok or not info then return nil end
+  return info.tagID
+end
+local function getQuestClassification(questID)
+  if not C_QuestInfoSystem or not C_QuestInfoSystem.GetQuestClassification then return nil end
+  local ok, classification = pcall(C_QuestInfoSystem.GetQuestClassification, questID)
+  if not ok then return nil end
+  return classification
+end
+local function getQuestCampaignID(questID)
+  if not C_CampaignInfo or not C_CampaignInfo.GetCampaignID then return nil end
+  local ok, id = pcall(C_CampaignInfo.GetCampaignID, questID)
+  if not ok then return nil end
+  if id == 0 then return nil end
+  return id
+end
+local function getQuestLineID(questID)
+  if not C_QuestLine or not C_QuestLine.GetQuestLineInfo then return nil end
+  if not C_Map or not C_Map.GetBestMapForUnit then return nil end
+  local uiMapID = C_Map.GetBestMapForUnit("player")
+  if not uiMapID then return nil end
+  local ok, info = pcall(C_QuestLine.GetQuestLineInfo, questID, uiMapID)
+  if not ok or not info then return nil end
+  return info.questLineID
+end
+
+local function renderInfoExtras(tooltip, info, shown)
+  for k, v in pairs(info) do
+    if not shown[k] then
+      local display
+      if type(v) == "boolean" then
+        display = v and "true" or "false"
+      elseif k == "status" and Enum and Enum.GossipOptionStatus then
+        display = enumName(Enum.GossipOptionStatus, v)
+      elseif k == "frequency" and Enum and Enum.QuestFrequency then
+        display = enumName(Enum.QuestFrequency, v)
+      elseif type(v) == "table" then
+        display = nil  -- skip nested tables (rewards already handled)
+      else
+        display = tostring(v)
+      end
+      if display then addInfoLine(tooltip, k, display) end
+    end
+  end
+end
+
+local function attachGossipIDs()
+  local sb = GossipFrame and GossipFrame.GreetingPanel and GossipFrame.GreetingPanel.ScrollBox
+  if not sb or not sb.ForEachFrame then return end
+  sb:ForEachFrame(function(frame)
+    local data = frame.GetElementData and frame:GetElementData()
+    if not data or not data.info then return end
+    if not data.info.gossipOptionID and not data.info.questID then return end
+    if not frame.HookScript or not frame.SetScript or not frame.HasScript then return end
+    frame._idTipOptionInfo = data.info
+    if not frame._idTipHooked then
+      frame._idTipHooked = true
+      local onEnter = function(self)
+        local info = self._idTipOptionInfo
+        if not info then return end
+        if not GameTooltip:IsShown() then
+          GameTooltip:SetOwner(self, "ANCHOR_TOPRIGHT")
+        end
+        if info.gossipOptionID then
+          -- IDs first, via existing kind mechanism
+          add(GameTooltip, info.gossipOptionID, "gossip")
+          if info.spellID then add(GameTooltip, info.spellID, "spell") end
+          if info.icon then add(GameTooltip, info.icon, "icon") end
+          if info.overrideIconID and info.overrideIconID ~= info.icon then
+            add(GameTooltip, info.overrideIconID, "icon")
+          end
+          if info.rewards then
+            for _, r in ipairs(info.rewards) do
+              if r and r.id then
+                if r.rewardType == 0 then       -- Enum.GossipOptionRewardType.Item
+                  add(GameTooltip, r.id, "item")
+                elseif r.rewardType == 1 then   -- Enum.GossipOptionRewardType.Currency
+                  add(GameTooltip, r.id, "currency")
+                end
+              end
+            end
+          end
+          renderInfoExtras(GameTooltip, info, {
+            gossipOptionID=true, spellID=true, icon=true,
+            overrideIconID=true, rewards=true, name=true,
+          })
+        elseif info.questID then
+          add(GameTooltip, info.questID, "quest")
+          local tagID = getQuestTagID(info.questID)
+          if tagID then addInfoLine(GameTooltip, "TagID", tagID) end
+          local class = getQuestClassification(info.questID)
+          if class ~= nil then
+            local enumTbl = Enum and Enum.QuestClassification
+            addInfoLine(GameTooltip, "Classification", enumName(enumTbl, class))
+          end
+          local lineID = getQuestLineID(info.questID)
+          if lineID then addInfoLine(GameTooltip, "QuestLineID", lineID) end
+          local campID = getQuestCampaignID(info.questID)
+          if campID then addInfoLine(GameTooltip, "CampaignID", campID) end
+          renderInfoExtras(GameTooltip, info, {
+            questID=true, title=true,
+          })
+        end
+        GameTooltip:Show()
+      end
+      if frame:HasScript("OnEnter") then
+        frame:HookScript("OnEnter", onEnter)
+      else
+        frame:SetScript("OnEnter", onEnter)
+      end
+      if frame:HasScript("OnLeave") then
+        frame:HookScript("OnLeave", GameTooltip_Hide)
+      else
+        frame:SetScript("OnLeave", GameTooltip_Hide)
+      end
+    end
+  end)
+end
+
+local gossipEventFrame = CreateFrame("Frame")
+gossipEventFrame:RegisterEvent("GOSSIP_SHOW")
+pcall(function() gossipEventFrame:RegisterEvent("GOSSIP_OPTIONS_REFRESHED") end)
+gossipEventFrame:SetScript("OnEvent", function()
+  if C_Timer and C_Timer.After then
+    C_Timer.After(0, attachGossipIDs)
+    C_Timer.After(0.1, attachGossipIDs)
+  else
+    attachGossipIDs()
+  end
 end)
 
 -------------------------------------------------------------------------------
