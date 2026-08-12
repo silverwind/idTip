@@ -13,6 +13,7 @@ lint: node_modules
 test:
 	command -v luajit >/dev/null 2>&1 || brew install luajit
 	luajit idTip_test.lua
+	@$(MAKE) --no-print-directory chmod
 
 .PHONY: coverage
 coverage:
@@ -43,6 +44,10 @@ update-js: node_modules
 patch minor major: node_modules
 	pnpm exec versions $@ idTip.toc
 
+# Blizzard's Agent chmods 0777 across its AddOns tree, which reaches idTip.lua and
+# idTip.toc through the symlinks there, so normalize before they reach a commit.
+# Link only those two files into AddOns, never this directory, or the sweep also
+# walks .git and node_modules and the launcher hangs on "Initializing".
 .PHONY: chmod
 chmod:
 	@find . -type d -depth 1 -exec chmod 0755 {} \;
