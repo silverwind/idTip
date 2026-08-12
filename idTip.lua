@@ -440,43 +440,9 @@ hook(GameTooltip, "SetRecipeReagentItem", function(tooltip, id)
   add(tooltip, id, "item")
 end)
 
-local function onSetItem(tooltip)
+hookScript(GameTooltip, "OnTooltipSetItem", function(tooltip)
   attachItemTooltip(tooltip, nil)
-end
-hookScript(GameTooltip, "OnTooltipSetItem", onSetItem)
-
--- Hook spell/item display on addon-created tooltip frames (e.g. ElvUI_SpellBookTooltip)
-local hookedTooltips = {[GameTooltip] = true}
-local function hookAddonTooltip(tooltip)
-  if not tooltip or hookedTooltips[tooltip] then return end
-  hookedTooltips[tooltip] = true
-  hook(tooltip, "SetSpellBookItem", function(tt, slot, bookType)
-    if GetSpellBookItemInfo then
-      local spellID = select(2, GetSpellBookItemInfo(slot, bookType))
-      if spellID then add(tt, spellID, "spell") end
-    end
-  end)
-  hook(tooltip, "SetSpellByID", function(tt, id)
-    addByKind(tt, id, "spell")
-  end)
-  hookScript(tooltip, "OnTooltipSetItem", onSetItem)
-  hookScript(tooltip, "OnTooltipSetSpell", function(tip)
-    if tip.GetSpell then
-      local id = select(2, tip:GetSpell())
-      add(tip, id, "spell")
-    end
-  end)
-end
-
-local function scanAddonTooltips()
-  local f = EnumerateFrames()
-  while f do
-    if f:IsObjectType("GameTooltip") and not hookedTooltips[f] then
-      hookAddonTooltip(f)
-    end
-    f = EnumerateFrames(f)
-  end
-end
+end)
 
 local function achievementOnEnter(btn)
   GameTooltip:SetOwner(btn, "ANCHOR_NONE")
@@ -570,17 +536,9 @@ end)
 -- Events
 -------------------------------------------------------------------------------
 
-local loggedIn = false
 local f = CreateFrame("frame")
 f:RegisterEvent("ADDON_LOADED")
-f:RegisterEvent("PLAYER_LOGIN")
-f:SetScript("OnEvent", function(_, event, addon)
-  if event == "PLAYER_LOGIN" then
-    loggedIn = true
-    scanAddonTooltips()
-    return
-  end
-  if loggedIn then scanAddonTooltips() end
+f:SetScript("OnEvent", function(_, _, addon)
   if addon == addonName then
     local defaults = {
       enabled = true,
