@@ -40,6 +40,7 @@ local function createMockTooltip(env, tooltipName)
   function t:SetOwner(owner) self._owner = owner end
   function t:IsOwned(frame) return self._owner == frame end
   function t:SetPoint() end
+  function t:SetMouseMotionEnabled(enabled) self._motion = enabled end
   function t:GetItem() return nil, mockState.itemLink end
   function t:GetSpell() return nil, mockState.spellId end
   function t:GetUnit() return nil, mockState.unit end
@@ -61,7 +62,7 @@ local function createMockTooltip(env, tooltipName)
 
   -- setters idTip hooks, present so hook()'s target[method] guard passes
   for _, method in ipairs({"SetTalent", "SetPvpTalent", "SetCompanionPet", "SetRecipeResultItem", "SetCurrencyByID",
-    "SetUnitAura", "SetUnitBuff", "SetUnitDebuff", "SetUnitAuraByAuraInstanceID", "SetUnitBuffByAuraInstanceID",
+    "SetArtifactPowerByID", "SetUnitAura", "SetUnitBuff", "SetUnitDebuff", "SetUnitAuraByAuraInstanceID", "SetUnitBuffByAuraInstanceID",
     "SetUnitDebuffByAuraInstanceID"}) do
     t[method] = function() end
   end
@@ -646,6 +647,12 @@ describe("regressions", function()
     assertEq(env.PetBattlePrimaryAbilityTooltip.Description._text, "base")
   end)
 
+  -- no TooltipDataType carries an artifact power, so nothing else can produce it
+  test("an artifact power adds its id", function()
+    hooks.SetArtifactPowerByID(env.GameTooltip, 1739)
+    assertEq(findLine(env.GameTooltip, "ArtifactPowerID").right, 1739)
+  end)
+
   test("a criterion resolves its own criteria index, hovered on the row or its name", function()
     -- a progress bar followed by two text criteria, so text pool index 1 is criteria 2
     local flags = {env.EVALUATION_TREE_FLAG_PROGRESS_BAR, 0, 0}
@@ -681,6 +688,9 @@ describe("regressions", function()
     env.GameTooltip:_reset()
     row:_fire("OnEnter")
     assertEq(findLine(env.GameTooltip, "CriteriaID").right, 222)
+
+    -- classic rows ship mouse-disabled, so hooking OnEnter alone never fires
+    assertEq(row._motion, true)
   end)
 
   test("a non-creature guid falls back to the tooltip's own id", function()

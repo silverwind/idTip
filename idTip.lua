@@ -19,6 +19,7 @@ local kinds = {
   achievement = "AchievementID",
   criteria = "CriteriaID",
   ability = "AbilityID",
+  artifactpower = "ArtifactPowerID",
   currency = "CurrencyID",
   enchant = "EnchantID",
   bonus = "BonusID",
@@ -44,7 +45,8 @@ local defaultDisabledKinds = {bonus = true, traitnode = true, traitentry = true,
 -- options order, every kind in exactly one section, pinned by a test
 local kindSections = {
   {name = "Items", "item", "currency", "enchant", "gem", "bonus", "set", "expansion"},
-  {name = "Spells", "spell", "ability", "macro", "talent", "traitnode", "traitentry", "traitdef"},
+  {name = "Spells", "spell", "ability", "macro", "talent", "artifactpower",
+    "traitnode", "traitentry", "traitdef"},
   {name = "World", "unit", "object", "quest", "achievement", "criteria", "areapoi", "vignette"},
   {name = "Collections", "mount", "species", "visual", "source", "icon"},
 }
@@ -361,6 +363,11 @@ hook(GameTooltip, "SetRecipeResultItem", function(tooltip, id)
   add(tooltip, id, "spell")
 end)
 
+-- no TooltipDataType covers artifact power, so the setter is the only source
+hook(GameTooltip, "SetArtifactPowerByID", function(tooltip, id)
+  add(tooltip, id, "artifactpower")
+end)
+
 -- Ids that tooltip data does not carry
 
 -- SetTalent is the classic path. Retail only reaches SetPvpTalent, its class
@@ -493,6 +500,9 @@ local function hookCriteria(frame, kind, index)
     target.idTipIndex = index -- pooled frames get reused with a different index
     target.idTipKind = kind
     if not target.idTipHooked then
+      -- classic criteria rows ship mouse-disabled, so OnEnter could never fire.
+      -- Motion only, leaving clicks to fall through to the achievement button.
+      if target.SetMouseMotionEnabled then target:SetMouseMotionEnabled(true) end
       hookScript(target, "OnEnter", criteriaOnEnter)
       hookScript(target, "OnLeave", GameTooltip_Hide)
       target.idTipHooked = true
