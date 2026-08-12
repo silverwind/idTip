@@ -1,29 +1,29 @@
 local addonName = ...
 
-local GetSpellTexture = (C_Spell and C_Spell.GetSpellTexture) and C_Spell.GetSpellTexture or GetSpellTexture
-local GetItemIconByID = (C_Item and C_Item.GetItemIconByID) and C_Item.GetItemIconByID or GetItemIconByID
-local GetItemInfo = (C_Item and C_Item.GetItemInfo) and C_Item.GetItemInfo or GetItemInfo
-local GetItemGem = (C_Item and C_Item.GetItemGem) and C_Item.GetItemGem or GetItemGem
-local GetItemSpell = (C_Item and C_Item.GetItemSpell) and C_Item.GetItemSpell or GetItemSpell
-local GetRecipeReagentItemLink = (C_TradeSkillUI and C_TradeSkillUI.GetRecipeReagentItemLink) and C_TradeSkillUI.GetRecipeReagentItemLink or GetTradeSkillReagentItemLink
-local GetItemLinkByGUID = (C_Item and C_Item.GetItemLinkByGUID) and C_Item.GetItemLinkByGUID
+-- gated, so a namespace Blizzard drops costs one kind, not the addon. Callers check.
+local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
+local GetItemIconByID = C_Item and C_Item.GetItemIconByID
+local GetItemInfo = C_Item and C_Item.GetItemInfo
+local GetItemGem = C_Item and C_Item.GetItemGem
+local GetItemSpell = C_Item and C_Item.GetItemSpell
+local GetItemLinkByGUID = C_Item and C_Item.GetItemLinkByGUID -- retail only
+
+local white = WHITE_FONT_COLOR or {r = 1, g = 1, b = 1}
 
 local kinds = {
   spell = "SpellID",
   item = "ItemID",
-  unit = "NPC ID",
+  unit = "NpcID",
   quest = "QuestID",
   talent = "TalentID",
   achievement = "AchievementID",
   criteria = "CriteriaID",
   ability = "AbilityID",
   currency = "CurrencyID",
-  artifactpower = "ArtifactPowerID",
   enchant = "EnchantID",
   bonus = "BonusID",
   gem = "GemID",
   mount = "MountID",
-  companion = "CompanionID",
   macro = "MacroID",
   set = "SetID",
   visual = "VisualID",
@@ -39,12 +39,18 @@ local kinds = {
   traitdef = "TraitDefinitionID",
 }
 
-local defaultDisabledKinds = {
-  "bonus", "traitnode", "traitentry", "traitdef",
+local defaultDisabledKinds = {bonus = true, traitnode = true, traitentry = true, traitdef = true}
+
+-- options order, every kind in exactly one section, pinned by a test
+local kindSections = {
+  {name = "Items", "item", "currency", "enchant", "gem", "bonus", "set", "expansion"},
+  {name = "Spells", "spell", "ability", "macro", "talent", "traitnode", "traitentry", "traitdef"},
+  {name = "World", "unit", "object", "quest", "achievement", "criteria", "areapoi", "vignette"},
+  {name = "Collections", "mount", "species", "visual", "source", "icon"},
 }
 
+-- Enum.TooltipDataType, identical on every client. Types with no useful id are absent.
 -- https://warcraft.wiki.gg/wiki/Struct_TooltipData
--- https://github.com/Gethe/wow-ui-source/blob/live/Interface/AddOns/Blizzard_APIDocumentationGenerated/TooltipInfoSharedDocumentation.lua
 local kindsByID = {
   [0]  = "item", -- Item
   [1]  = "spell", -- Spell
@@ -52,508 +58,517 @@ local kindsByID = {
   [3]  = "unit", -- Corpse
   [4]  = "object", -- Object
   [5]  = "currency", -- Currency
-  [6]  = "unit", -- BattlePet
   [7]  = "spell", -- UnitAura
   [8]  = "spell", -- AzeriteEssence
-  [9]  = "unit", -- CompanionPet
+  [9]  = "species", -- CompanionPet, whose id is a species id
   [10] = "mount", -- Mount
   [11] = "spell", -- PetAction
   [12] = "achievement", -- Achievement
   [13] = "spell", -- EnhancedConduit
   [14] = "set", -- EquipmentSet
-  [15] = "", -- InstanceLock
-  [16] = "", -- PvPBrawl
   [17] = "spell", -- RecipeRankInfo
   [18] = "spell", -- Totem
   [19] = "item", -- Toy
-  [20] = "", -- CorruptionCleanser
-  [21] = "", -- MinimapMouseover
-  [22] = "", -- Flyout
   [23] = "quest", -- Quest
   [24] = "quest", -- QuestPartyProgress
   [25] = "macro", -- Macro
-  [26] = "", -- Debug
 }
 
-local function contains(table, element)
-  for _, value in pairs(table) do
-    if value == element then return true end
+local function addUnique(list, value)
+  if not value then return end
+  for _, existing in ipairs(list) do
+    if existing == value then return end
   end
-  return false
+  list[#list + 1] = value
 end
 
 local function configKey(key)
   return key .. "Enabled"
 end
 
-local function hook(table, fn, cb)
-  if table and table[fn] then
-    hooksecurefunc(table, fn, cb)
+local function hook(target, method, callback)
+  if target and target[method] then
+    hooksecurefunc(target, method, callback)
   end
 end
 
-local function hookScript(table, fn, cb)
-  if table and table:HasScript(fn) then
-    table:HookScript(fn, cb)
+local function hookScript(target, script, callback)
+  if target and target:HasScript(script) then
+    target:HookScript(script, callback)
   end
 end
+
+local function inPetBattle() return C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() end
 
 local function getTooltipName(tooltip)
-  return tooltip:GetName() or nil
+  return tooltip:GetName()
 end
 
-local function isSecret(value)
-  if not issecretvalue or not issecrettable then return false end
-  return issecretvalue(value) or issecrettable(value)
+-- absent before the secret-value API existed, bound once rather than per call.
+-- Only a table can be a secret table, and this runs once per line scanned.
+local isSecret = issecretvalue and issecrettable and function(value)
+  return issecretvalue(value) or (type(value) == "table" and issecrettable(value))
+end or function() return false end
+
+-- positional API returns vary by version, so drop non-ids here, not at each site
+local function isStringOrNumber(value)
+  return type(value) == "string" or type(value) == "number"
+end
+
+local function isValidId(id)
+  if type(id) == "table" then return #id > 0 end
+  return isStringOrNumber(id) and id ~= ""
+end
+
+local function cellText(name, side, index)
+  local frame = _G[name .. "Text" .. side .. index]
+  local text = frame and frame:GetText()
+  -- a secret cell is unreadable rather than fatal
+  if isSecret(text) then return nil end
+  return text, frame
+end
+
+-- Joins later ids onto the line this kind already has. The left cell must match
+-- exactly, so no plural or foreign label counts as ours. Returns whether one existed.
+local function extendLine(tooltip, name, label, id)
+  local plural = label .. "s"
+  for index = tooltip:NumLines(), 1, -1 do
+    local text, left = cellText(name, "Left", index)
+    if text == label or text == plural then
+      local joined, right = cellText(name, "Right", index)
+      if not right then return true end
+
+      local values = {} -- a foreign left-only line leaves its right cell unwritten
+      for value in string.gmatch(joined or "", "[^,]+") do values[#values + 1] = value end
+
+      local count = #values
+      if type(id) == "table" then
+        for _, value in ipairs(id) do addUnique(values, tostring(value)) end
+      else
+        addUnique(values, tostring(id)) -- wrapping a scalar would allocate per merge
+      end
+      if #values > count then
+        left:SetText(#values > 1 and plural or label)
+        right:SetText(table.concat(values, ","))
+        tooltip:Show()
+      end
+      return true
+    end
+  end
+  return false
+end
+
+local function isEnabled(kind)
+  return not idTipConfig or (idTipConfig.enabled and idTipConfig[configKey(kind)])
+end
+
+-- one policy for every writer, so the pet battle one cannot drift from this
+local function shouldAdd(id, kind)
+  return not isSecret(id) and isValidId(id) and isEnabled(kind)
 end
 
 local function addLine(tooltip, id, kind)
-  if isSecret(id) then return end
-  if not id or id == "" or not tooltip or not tooltip.GetName then return end
-  if idTipConfig and (not idTipConfig.enabled or not idTipConfig[configKey(kind)]) then return end
+  if not shouldAdd(id, kind) then return end
 
-  -- Abort when tooltip has no name or when :GetName throws
+  -- abort when the tooltip has no name, or when :GetName throws
   local ok, name = pcall(getTooltipName, tooltip)
   if not ok or not name then return end
 
-  -- Check if we already added to this tooltip
-  local frame, text
-  for i = tooltip:NumLines(), 1, -1 do
-    frame = _G[name .. "TextLeft" .. i]
-    if frame then text = frame:GetText() end
-    if isSecret(text) then return end
-    if text and string.find(text, kinds[kind]) then return end
-  end
-
   local multiple = type(id) == "table"
-  if multiple and #id == 1 then
-    id = id[1]
-    multiple = false
-  end
+  local label = kinds[kind]
 
-  local left = kinds[kind] .. (multiple and "s" or "")
+  -- the rendered lines are the only per-tooltip state that cannot go stale
+  if extendLine(tooltip, name, label, id) then return end
+
+  local left = label .. (multiple and "s" or "")
   local right = multiple and table.concat(id, ",") or id
-  tooltip:AddDoubleLine(left, right, nil, nil, nil, WHITE_FONT_COLOR.r, WHITE_FONT_COLOR.g, WHITE_FONT_COLOR.b)
+  tooltip:AddDoubleLine(left, right, nil, nil, nil, white.r, white.g, white.b)
   tooltip:Show()
 end
 
-local function isStringOrNumber(val)
-  local t = type(val)
-  return (t == "string") or (t == "number")
-end
-
--- id here can also be a table of multiple ids like for visuals
--- TODO: refactor to single id and dynamically extend ids in existing tooltip
+-- id can be a table of ids, like a transmog's several sources
 local function add(tooltip, id, kind)
+  if type(id) == "table" and #id == 1 then id = id[1] end
   addLine(tooltip, id, kind)
+  if not isStringOrNumber(id) then return end
 
-  -- spell texture
-  if kind == "spell" and GetSpellTexture and isStringOrNumber(id) then
-    local iconId = GetSpellTexture(id)
+  if kind == "spell" then
+    local iconId = GetSpellTexture and GetSpellTexture(id)
     if iconId then add(tooltip, iconId, "icon") end
-  end
-
-  -- item icon
-  if kind == "item" and GetItemIconByID and isStringOrNumber(id) then
-    local iconId = GetItemIconByID(id)
+  elseif kind == "item" then
+    local iconId = GetItemIconByID and GetItemIconByID(id)
     if iconId then add(tooltip, iconId, "icon") end
-  end
 
-  -- item spell
-  if kind == "item" and GetItemSpell and isStringOrNumber(id) then
-    local spellId = select(2, GetItemSpell(id))
+    local spellId = GetItemSpell and select(2, GetItemSpell(id))
     if spellId then add(tooltip, spellId, "spell") end
   end
-
-  -- macro spell
-  if kind == "macro" then
-    if tooltip.GetPrimaryTooltipData then
-      local data = tooltip:GetPrimaryTooltipData();
-      if data and data.lines and data.lines[1] and data.lines[1].tooltipID then
-        add(tooltip, data.lines[1].tooltipID, "spell")
-        return
-      end
-    end
-    if tooltip.GetSpell then
-      local spellID = select(2, tooltip:GetSpell())
-      if spellID then
-        add(tooltip, spellID, "spell")
-        return
-      end
-    end
-    if GetMacroSpell and isStringOrNumber(id) then
-      local spellID = select(3, GetMacroSpell(id))
-      if spellID then add(tooltip, spellID, "spell") end
-    end
-  end
 end
 
-local function addByKind(tooltip, id, kind)
-  if not kind or not id then return end
-  if kind == "spell" or kind == "enchant" or kind == "trade" then
-    add(tooltip, id, "spell")
-  elseif (kinds[kind]) then
-    add(tooltip, id, kind)
-  end
+-- only the creature form carries an npc id, a Player or BattlePet guid holds something else
+local function npcIdFromGUID(guid)
+  return tonumber(guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)%-%x+$"))
+end
+
+-- during a battle the unit is the pet, whose npc id belongs on no tooltip
+local function addNpc(tooltip, guid, fallbackId)
+  if inPetBattle() then return end
+  add(tooltip, npcIdFromGUID(guid or "") or fallbackId, "unit")
 end
 
 local function addItemInfo(tooltip, link)
-  if not link then return end
-  local itemString = string.match(link, "item:([%-?%d:]+)")
-  if not itemString then return end
+  local itemString = link and string.match(link, "item:([%-?%d:]+)")
+  if not itemString then return false end
 
-  local bonuses = {}
   local itemSplit = {}
-
-  for v in string.gmatch(itemString, "(%d*:?)") do
-    if v == ":" then
-      itemSplit[#itemSplit + 1] = 0
-    else
-      itemSplit[#itemSplit + 1] = string.gsub(v, ":", "")
-    end
+  -- never matches empty, so negative and blank fields keep position on Lua 5.1
+  for value in string.gmatch(itemString .. ":", "([^:]*):") do
+    itemSplit[#itemSplit + 1] = value
   end
 
-  for index = 1, tonumber(itemSplit[13]) do
-    bonuses[#bonuses + 1] = itemSplit[13 + index]
-  end
-
-  local gems = {}
-  if GetItemGem then
-    for i = 1, 4 do
-      local gemLink = select(2, GetItemGem(link, i))
-      if gemLink then
-        local gemDetail = string.match(gemLink, "item[%-?%d:]+")
-        gems[#gems + 1] = string.match(gemDetail, "item:(%d+):")
-      elseif flags == 256 then
-        gems[#gems + 1] = "0"
-      end
-    end
-  end
-
-  -- TODO: GetMouseFocus is replaced with GetMouseFoci in TWW
   local itemId = string.match(link, "item:(%d*)")
-  if (itemId == "" or itemId == "0") and TradeSkillFrame and TradeSkillFrame.RecipeList and TradeSkillFrame:IsVisible() and GetRecipeReagentItemLink and GetMouseFocus and GetMouseFocus().reagentIndex then
-    local selectedRecipe = TradeSkillFrame.RecipeList:GetSelectedRecipeID()
-    for i = 1, 8 do
-      if GetMouseFocus().reagentIndex == i then
-        itemId = GetRecipeReagentItemLink(selectedRecipe, i):match("item:(%d*)") or nil
-        break
-      end
+  if not itemId or itemId == "" or itemId == "0" then return false end
+  add(tooltip, itemId, "item")
+
+  local enchantId = tonumber(itemSplit[2])
+  if enchantId and enchantId ~= 0 then add(tooltip, itemSplit[2], "enchant") end
+
+  -- both kinds are checked here as well as in addLine, so a disabled one costs
+  -- neither a table per tooltip nor four gem queries
+  if isEnabled("bonus") then
+    local bonuses = {}
+    -- a crafted link can claim more bonus ids than it carries, and the count is the bound
+    for index = 1, math.min(tonumber(itemSplit[13]) or 0, #itemSplit - 13) do
+      bonuses[#bonuses + 1] = itemSplit[13 + index]
     end
+    add(tooltip, bonuses, "bonus")
   end
 
-  if itemId then
-    add(tooltip, itemId, "item")
+  if GetItemGem and isEnabled("gem") then
+    local gems = {}
+    for socket = 1, 4 do
+      local gemLink = select(2, GetItemGem(link, socket))
+      addUnique(gems, gemLink and string.match(gemLink, "item:(%d+):"))
+    end
+    add(tooltip, gems, "gem")
+  end
 
-    if itemSplit[2] ~= 0 then add(tooltip, itemSplit[2], "enchant") end
-    if #bonuses ~= 0 then add(tooltip, bonuses, "bonus") end
-    if #gems ~= 0 then add(tooltip, gems, "gem") end
-
-    local expansionId = select(15, GetItemInfo(itemId))
+  if GetItemInfo then
+    local expansionId, setId = select(15, GetItemInfo(itemId))
     if expansionId and expansionId ~= 254 then -- always 254 on classic, therefor uninteresting
       add(tooltip, expansionId, "expansion")
     end
-
-    local setId = select(16, GetItemInfo(itemId))
-    if setId then
-      add(tooltip, setId, "set")
-    end
+    if setId then add(tooltip, setId, "set") end
   end
+
+  return true
 end
 
-local function attachItemTooltip(tooltip, id)
-  if (tooltip == ShoppingTooltip1 or tooltip == ShoppingTooltip2) and tooltip.info and tooltip.info.tooltipData and tooltip.info.tooltipData.guid and GetItemLinkByGUID then
-    local link = GetItemLinkByGUID(tooltip.info.tooltipData.guid)
-    if link then
-      addItemInfo(tooltip, link)
-    else
-      add(tooltip, id, "item")
-    end
-  elseif tooltip.GetItem then
-    local link = select(2, tooltip:GetItem())
-    if link then
-      addItemInfo(tooltip, link)
-    else
-      add(tooltip, id, "item")
-    end
-  else
-    add(tooltip, id, "item")
-  end
-end
+-- Tooltip data
+--
+-- On retail every GameTooltip:SetX is generated by TooltipDataHandlerMixin and routes
+-- through ProcessInfo, which fires this post call, so one hook covers every kind.
+-- Only retail mixes that in, see the classic section below.
 
+-- absent on classic era, where TooltipDataHandler.lua is ExcludeLoadGameType vanilla
 if TooltipDataProcessor then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
-    if isSecret(data.type) or isSecret(data.guid) then return end
+    if isSecret(data.type) or isSecret(data.guid) then return end -- indexing with a secret errors
     local kind = kindsByID[tonumber(data.type)]
+    if not kind then return end
 
-    -- unit special handling
-    if kind == "unit" and data and data.guid then
-      local unitId = tonumber(data.guid:match("-(%d+)-%x+$"), 10)
-      if unitId and data.guid:match("%a+") ~= "Player" then
-        add(tooltip, unitId, "unit")
-      else
-        add(tooltip, data.id, "unit")
-      end
-    elseif kind == "item" and data and data.guid and GetItemLinkByGUID then
-      local link = GetItemLinkByGUID(data.guid)
-      if link then
-        addItemInfo(tooltip, link)
-      else
-        add(tooltip, data.id, kind)
-      end
-    elseif kind then
+    if kind == "unit" then
+      addNpc(tooltip, data.guid, data.id)
+    elseif kind == "item" then
+      -- the link carries ids data.id lacks, and the guid resolves the actual
+      -- item instance, so it wins, as in TooltipUtil.GetDisplayedItem
+      local link = (data.guid and GetItemLinkByGUID and GetItemLinkByGUID(data.guid)) or data.hyperlink
+      if not link and tooltip.GetItem then link = select(2, tooltip:GetItem()) end
+      if not addItemInfo(tooltip, link) then add(tooltip, data.id, kind) end
+    else
       add(tooltip, data.id, kind)
     end
   end)
 end
 
-if GetActionInfo then
-  hook(GameTooltip, "SetAction", function(tooltip, slot)
-    local kind, id = GetActionInfo(slot)
-    addByKind(tooltip, id, kind)
-  end)
-end
+-- Classic and anniversary
+--
+-- Both ship TooltipDataHandler.lua but mix TooltipDataHandlerMixin into no tooltip,
+-- so the post call above never fires here. Only that mixin defines ProcessInfo, so
+-- its absence is the test. Registering these on retail too would parse every link twice.
 
-if TalentDisplayMixin then
-  hook(TalentDisplayMixin, "SetTooltipInternal", function(btn)
-    if not btn then return end
-    add(GameTooltip, btn.entryID, "traitentry")
-    add(GameTooltip, btn.definitionID, "traitdef")
-    if btn.GetNodeInfo then
-      add(GameTooltip, btn:GetNodeInfo().ID, "traitnode")
-    end
-  end)
-end
+if GameTooltip and not GameTooltip.ProcessInfo then
 
-local function onSetHyperlink(tooltip, link)
-  local kind, id = string.match(link,"^(%a+):(%d+)")
-  addByKind(tooltip, id, kind)
-end
-hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
-hook(GameTooltip, "SetHyperlink", onSetHyperlink)
-
-if UnitBuff then
-  hook(GameTooltip, "SetUnitBuff", function(tooltip, ...)
-    local id = select(10, UnitBuff(...))
-    add(tooltip, id, "spell")
-  end)
-end
-
-if UnitDebuff then
-  hook(GameTooltip, "SetUnitDebuff", function(tooltip, ...)
-    local id = select(10, UnitDebuff(...))
-    add(tooltip, id, "spell")
-  end)
-end
-
-if UnitAura then
-  hook(GameTooltip, "SetUnitAura", function(tooltip, ...)
-    local id = select(10, UnitAura(...))
-    add(tooltip, id, "spell")
-  end)
-end
-
-hook(GameTooltip, "SetSpellByID", function(tooltip, id)
-  addByKind(tooltip, id, "spell")
-end)
-
-hook(_G, "SetItemRef", function(link)
-  local id = tonumber(link:match("spell:(%d+)"))
-  add(ItemRefTooltip, id, "spell")
+hookScript(GameTooltip, "OnTooltipSetItem", function(tooltip)
+  addItemInfo(tooltip, select(2, tooltip:GetItem()))
 end)
 
 hookScript(GameTooltip, "OnTooltipSetSpell", function(tooltip)
-  local id = select(2, tooltip:GetSpell())
-  add(tooltip, id, "spell")
+  add(tooltip, select(2, tooltip:GetSpell()), "spell")
 end)
-
-if SpellBook_GetSpellBookSlot then
-  hook(_G, "SpellButton_OnEnter", function(btn)
-    local slot = SpellBook_GetSpellBookSlot(btn)
-    local spellID = select(2, GetSpellBookItemInfo(slot, SpellBookFrame.bookType))
-    add(GameTooltip, spellID, "spell")
-  end)
-end
-
-hook(GameTooltip, "SetRecipeResultItem", function(tooltip, id)
-  add(tooltip, id, "spell")
-end)
-
-hook(GameTooltip, "SetRecipeRankInfo", function(tooltip, id)
-  add(tooltip, id, "spell")
-end)
-
-if C_ArtifactUI and C_ArtifactUI.GetPowerInfo then
-  hook(GameTooltip, "SetArtifactPowerByID", function(tooltip, powerID)
-    local powerInfo = C_ArtifactUI.GetPowerInfo(powerID)
-    add(tooltip, powerID, "artifactpower")
-    add(tooltip, powerInfo.spellID, "spell")
-  end)
-end
-
-if GetTalentInfoByID then
-  hook(GameTooltip, "SetTalent", function(tooltip, id)
-    local ok, result = pcall(GetTalentInfoByID, id)
-    if not ok then return end
-    local spellID = select(6, result)
-    add(tooltip, id, "talent")
-    add(tooltip, spellID, "spell")
-  end)
-end
-
-if GetPvpTalentInfoByID then
-  hook(GameTooltip, "SetPvpTalent", function(tooltip, id)
-    local spellID = select(6, GetPvpTalentInfoByID(id))
-    add(tooltip, id, "talent")
-    add(tooltip, spellID, "spell")
-  end)
-end
-
--- Pet Journal team icon
-if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
-  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
-    local speciesId = select(1, C_PetJournal.GetPetInfoByPetID(petId));
-    if speciesId then
-      local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId));
-      add(GameTooltip, speciesId, "species");
-      add(GameTooltip, npcId, "unit");
-    end
-  end)
-end
 
 hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
-  if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
   local unit = select(2, tooltip:GetUnit())
-  if unit and UnitGUID then
-    local guid = UnitGUID(unit) or ""
-    local id = tonumber(guid:match("-(%d+)-%x+$"), 10)
-    if id and guid:match("%a+") ~= "Player" then add(GameTooltip, id, "unit") end
-  end
+  if unit and UnitGUID then addNpc(tooltip, UnitGUID(unit)) end
 end)
 
-hook(GameTooltip, "SetToyByItemID", function(tooltip, id)
-  add(tooltip, id, "item")
-end)
-
-hook(GameTooltip, "SetRecipeReagentItem", function(tooltip, id)
-  add(tooltip, id, "item")
-end)
-
-hookScript(GameTooltip, "OnTooltipSetItem", function(tooltip)
-  attachItemTooltip(tooltip, nil)
-end)
-
-local function achievementOnEnter(btn)
-  GameTooltip:SetOwner(btn, "ANCHOR_NONE")
-  GameTooltip:SetPoint("TOPLEFT", btn, "TOPRIGHT", 0, 0)
-  add(GameTooltip, btn.id, "achievement")
-  GameTooltip:Show()
-end
-
-local function criteriaOnEnter(enterIndex)
-  return function(frame)
-    if not GetAchievementCriteriaInfo then return end
-    local btn = frame:GetParent() and frame:GetParent():GetParent()
-    if not btn or not btn.id then return end
-    local achievementId = btn.id
-    local index = frame.___index or enterIndex
-    if index > GetAchievementNumCriteria(achievementId) then return end -- avoid error on some of the buttons like on "Level 70" achievement
-    local criteriaId = select(10, GetAchievementCriteriaInfo(achievementId, index))
-    if criteriaId then
-      if not GameTooltip:IsVisible() then
-        GameTooltip:SetOwner(btn:GetParent(), "ANCHOR_NONE")
-      end
-      GameTooltip:SetPoint("TOPLEFT", btn, "TOPRIGHT", 0, 0)
-      add(GameTooltip, achievementId, "achievement")
-      add(GameTooltip, criteriaId, "criteria")
-      GameTooltip:Show()
-    end
+-- an aura is its own tooltip type, so no OnTooltipSet script covers it, and the
+-- player buff bar uses the instance-ID setters
+if C_UnitAuras then
+  local byInstance = C_UnitAuras.GetAuraDataByAuraInstanceID
+  for method, getAura in pairs({SetUnitAura = C_UnitAuras.GetAuraDataByIndex,
+    SetUnitBuff = C_UnitAuras.GetBuffDataByIndex, SetUnitDebuff = C_UnitAuras.GetDebuffDataByIndex,
+    SetUnitAuraByAuraInstanceID = byInstance, SetUnitBuffByAuraInstanceID = byInstance,
+    SetUnitDebuffByAuraInstanceID = byInstance}) do
+    hook(GameTooltip, method, function(tooltip, unit, key, filter)
+      local aura = getAura(unit, key, filter)
+      add(tooltip, aura and aura.spellId, "spell")
+    end)
   end
 end
 
-if C_PetBattles and C_PetBattles.GetActivePet and C_PetBattles.GetAbilityInfo then
-  hook(_G, "PetBattleAbilityButton_OnEnter", function(btn)
-    local petIndex = C_PetBattles.GetActivePet(LE_BATTLE_PET_ALLY)
-    if btn:GetEffectiveAlpha() > 0 then
-      local id = select(1, C_PetBattles.GetAbilityInfo(LE_BATTLE_PET_ALLY, petIndex, btn:GetID()))
-      if id then
-        local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
-        PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
-      end
-    end
-  end)
+local function onSetHyperlink(tooltip, link)
+  local kind, id = string.match(link, "^(%a+):(%d+)")
+  if kind == "enchant" or kind == "trade" then kind = "spell" end
+  if kind and kinds[kind] then add(tooltip, id, kind) end
 end
+hook(GameTooltip, "SetHyperlink", onSetHyperlink)
+hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
 
-if C_PetBattles and C_PetBattles.GetAuraInfo then
-  hook(_G, "PetBattleAura_OnEnter", function(frame)
-    local parent = frame:GetParent()
-    local id = select(1, C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
-    if id then
-      local oldText = PetBattlePrimaryAbilityTooltip.Description:GetText(id)
-      PetBattlePrimaryAbilityTooltip.Description:SetText(oldText .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
-    end
+if GetActionInfo then
+  hook(GameTooltip, "SetAction", function(tooltip, slot)
+    local kind, id = GetActionInfo(slot)
+    if kinds[kind] then add(tooltip, id, kind) end -- the other action types carry no id we label
   end)
 end
 
 if C_CurrencyInfo and C_CurrencyInfo.GetCurrencyListLink then
   hook(GameTooltip, "SetCurrencyToken", function(tooltip, index)
-    local id = tonumber(string.match(C_CurrencyInfo.GetCurrencyListLink(index),"currency:(%d+)"))
-    add(tooltip, id, "currency")
+    local link = C_CurrencyInfo.GetCurrencyListLink(index)
+    add(tooltip, link and tonumber(link:match("currency:(%d+)")), "currency")
   end)
 end
 
+-- SetCurrencyToken only covers the token frame, and no script fires for a currency
 hook(GameTooltip, "SetCurrencyByID", function(tooltip, id)
   add(tooltip, id, "currency")
 end)
 
-hook(GameTooltip, "SetCurrencyTokenByID", function(tooltip, id)
-  add(tooltip, id, "currency")
+end
+
+-- the recipe tooltip carries Item data, so the spell is only available here
+hook(GameTooltip, "SetRecipeResultItem", function(tooltip, id)
+  add(tooltip, id, "spell")
 end)
 
-if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then
-  hook(_G, "QuestMapLogTitleButton_OnEnter", function(tooltip)
-    local id = C_QuestLog.GetQuestIDForLogIndex(tooltip.questLogIndex)
-    add(GameTooltip, id, "quest")
+-- Ids that tooltip data does not carry
+
+-- SetTalent is the classic path. Retail only reaches SetPvpTalent, its class
+-- talents being traits, covered by the TalentDisplayMixin hook below.
+local function onSetTalent(tooltip, id)
+  add(tooltip, id, "talent")
+end
+hook(GameTooltip, "SetTalent", onSetTalent)
+hook(GameTooltip, "SetPvpTalent", onSetTalent)
+
+if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
+  local function addPetInfo(speciesId)
+    if not speciesId then return end
+    add(GameTooltip, speciesId, "species")
+    add(GameTooltip, select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId)), "unit")
+  end
+
+  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
+    addPetInfo(C_PetJournal.GetPetInfoByPetID(petId))
   end)
 end
 
-hook(_G, "TaskPOI_OnEnter", function(tooltip)
-  if tooltip and tooltip.questID then add(GameTooltip, tooltip.questID, "quest") end
+if TalentDisplayMixin then
+  hook(TalentDisplayMixin, "SetTooltipInternal", function(button)
+    if not button then return end
+    add(GameTooltip, button.entryID, "traitentry")
+    add(GameTooltip, button.definitionID, "traitdef")
+    local nodeInfo = button.GetNodeInfo and button:GetNodeInfo()
+    add(GameTooltip, nodeInfo and nodeInfo.ID, "traitnode")
+  end)
+end
+
+hook(_G, "TaskPOI_OnEnter", function(button)
+  if button and button.questID then add(GameTooltip, button.questID, "quest") end
 end)
 
--- AreaPois (on the world map)
-hook(AreaPOIPinMixin, "TryShowTooltip", function(tooltip)
-  if tooltip and tooltip.areaPoiID then add(GameTooltip, tooltip.areaPoiID, "areapoi") end
+if C_QuestLog and C_QuestLog.GetQuestIDForLogIndex then -- retail only
+  hook(_G, "QuestMapLogTitleButton_OnEnter", function(button)
+    add(GameTooltip, C_QuestLog.GetQuestIDForLogIndex(button.questLogIndex), "quest")
+  end)
+end
+
+-- A pin with nothing to show gets no tooltip, and hooksecurefunc cannot see that
+-- early return, so ownership is the only signal. It also picks the frame, since
+-- classic vignettes fill WorldMapTooltip.
+local function pinTooltip(pin)
+  if not pin then return end
+  for _, tooltip in ipairs({GameTooltip, WorldMapTooltip}) do -- ipairs stops at the nil
+    if tooltip:IsShown() and tooltip:IsOwned(pin) then return tooltip end
+  end
+end
+
+hook(AreaPOIPinMixin, "TryShowTooltip", function(pin)
+  local tooltip = pinTooltip(pin)
+  if tooltip then
+    add(tooltip, pin.areaPoiID or pin.poiInfo and pin.poiInfo.areaPoiID, "areapoi") -- retail nests it, classic puts it on the pin
+  end
 end)
 
--- Vignettes (on the world map)
-hook(VignettePinMixin, "OnMouseEnter", function(tooltip)
-  if tooltip and tooltip.vignetteInfo and tooltip.vignetteInfo.vignetteID then add(GameTooltip, tooltip.vignetteInfo.vignetteID, "vignette") end
+hook(VignettePinMixin, "OnMouseEnter", function(pin)
+  local tooltip = pinTooltip(pin)
+  if tooltip and pin.vignetteInfo then add(tooltip, pin.vignetteInfo.vignetteID, "vignette") end
 end)
 
--------------------------------------------------------------------------------
+-- in Blizzard_FrameXMLUtil, which always loads, and the dressing room and transmog
+-- NPC reach it without Blizzard_Collections
+hook(CollectionWardrobeUtil, "SetAppearanceTooltip", function(_tooltip, appearanceData)
+  local sources = appearanceData and appearanceData.sources
+  if not sources then return end
+
+  local visualIDs, sourceIDs, itemIDs = {}, {}, {}
+  for _, source in ipairs(sources) do
+    addUnique(visualIDs, source.visualID)
+    addUnique(sourceIDs, source.sourceID)
+    addUnique(itemIDs, source.itemID)
+  end
+
+  add(GameTooltip, visualIDs, "visual")
+  add(GameTooltip, sourceIDs, "source")
+  add(GameTooltip, itemIDs, "item")
+end)
+
+-- these two own the tooltip rather than appending, so with nothing to add they
+-- must not touch it, or they leave an empty box
+local function achievementOnEnter(button)
+  if not isEnabled("achievement") then return end
+  GameTooltip:SetOwner(button, "ANCHOR_NONE")
+  GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+  add(GameTooltip, button.id, "achievement")
+  GameTooltip:Show()
+end
+
+-- Blizzard pools frames per criteria kind, so a pool index equals the criteria
+-- index only while an achievement mixes no kinds
+local function criteriaIndex(achievementId, kind, poolIndex)
+  for index = 1, GetAchievementNumCriteria(achievementId) do
+    local _, criteriaType, _, _, _, _, flags, assetId = GetAchievementCriteriaInfo(achievementId, index)
+    local frameKind = criteriaType == CRITERIA_TYPE_ACHIEVEMENT and assetId and "metas"
+      or bit.band(flags or 0, EVALUATION_TREE_FLAG_PROGRESS_BAR) ~= 0 and "progressBars"
+      or "criterias"
+    if frameKind == kind then
+      poolIndex = poolIndex - 1
+      if poolIndex == 0 then return index end
+    end
+  end
+end
+
+local function criteriaOnEnter(frame)
+  if not isEnabled("achievement") and not isEnabled("criteria") then return end
+  local button = frame:GetParent()
+  while button and not button.id do button = button:GetParent() end
+  if not button then return end
+  local index = criteriaIndex(button.id, frame.idTipKind, frame.idTipIndex)
+  if not index then return end -- released pool frames keep an index the achievement no longer has
+  local criteriaId = select(10, GetAchievementCriteriaInfo(button.id, index))
+  if not criteriaId then return end
+  if not GameTooltip:IsVisible() then GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE") end
+  GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
+  add(GameTooltip, button.id, "achievement")
+  add(GameTooltip, criteriaId, "criteria")
+  GameTooltip:Show()
+end
+
+local function hookCriteria(frame, kind, index)
+  if not frame then return end
+  -- retail 11.2.0 moved the tooltip to the criterion's Name font string, which
+  -- takes the mouse from the row. Classic has no such key.
+  for _, target in ipairs({frame, frame.Name}) do
+    -- stamped with the addon prefix, since these are Blizzard's frames
+    target.idTipIndex = index -- pooled frames get reused with a different index
+    target.idTipKind = kind
+    if not target.idTipHooked then
+      hookScript(target, "OnEnter", criteriaOnEnter)
+      hookScript(target, "OnLeave", GameTooltip_Hide)
+      target.idTipHooked = true
+    end
+  end
+end
+
+if C_PetBattles then
+  -- PetBattlePrimaryAbilityTooltip is a bare Frame with no lines or cells, so
+  -- addLine cannot reach it and this appends to a font string instead
+  local function addPetBattleAbility(id)
+    if not shouldAdd(id, "ability") then return end
+    local description = PetBattlePrimaryAbilityTooltip.Description
+    description:SetText((description:GetText() or "") .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
+  end
+
+  -- retail dropped the LE_ constant in favour of the enum
+  local ally = Enum.BattlePetOwner and Enum.BattlePetOwner.Ally or LE_BATTLE_PET_ALLY
+
+  hook(_G, "PetBattleAbilityButton_OnEnter", function(button)
+    if button:GetEffectiveAlpha() > 0 then
+      addPetBattleAbility(C_PetBattles.GetAbilityInfo(ally, C_PetBattles.GetActivePet(ally), button:GetID()))
+    end
+  end)
+
+  hook(_G, "PetBattleAura_OnEnter", function(frame)
+    local parent = frame:GetParent()
+    addPetBattleAbility(C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
+  end)
+end
+
+-- native settings list, so Blizzard owns layout, hit areas and search, and each
+-- setting writes straight into idTipConfig
+local function registerOptions()
+  local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
+
+  local function addCheckbox(key, label, default)
+    local setting = Settings.RegisterAddOnSetting(category, addonName .. "_" .. key, key, idTipConfig,
+      "boolean", label, default)
+    Settings.CreateCheckbox(category, setting)
+  end
+
+  local function addHeader(name)
+    if layout and CreateSettingsListSectionHeaderInitializer then
+      layout:AddInitializer(CreateSettingsListSectionHeaderInitializer(name))
+    end
+  end
+
+  addCheckbox("enabled", "Enabled", true)
+
+  for _, section in ipairs(kindSections) do
+    addHeader(section.name)
+    for _, kind in ipairs(section) do
+      addCheckbox(configKey(kind), kinds[kind], not defaultDisabledKinds[kind])
+    end
+  end
+
+  Settings.RegisterAddOnCategory(category)
+  return category
+end
+
 -- Events
--------------------------------------------------------------------------------
 
-local f = CreateFrame("frame")
-f:RegisterEvent("ADDON_LOADED")
-f:SetScript("OnEvent", function(_, _, addon)
+local eventFrame = CreateFrame("frame")
+eventFrame:RegisterEvent("ADDON_LOADED")
+eventFrame:SetScript("OnEvent", function(_, _, addon)
   if addon == addonName then
-    local defaults = {
-      enabled = true,
-      version = 1,
-    }
-
     if not idTipConfig then idTipConfig = {} end
 
-    for key, _ in pairs(defaults) do
-      if type(idTipConfig[key]) ~= type(defaults[key]) then idTipConfig[key] = defaults[key] end
-    end
+    if type(idTipConfig.enabled) ~= "boolean" then idTipConfig.enabled = true end
+    -- 1, not 2, so a config written before the field existed still migrates
+    if type(idTipConfig.version) ~= "number" then idTipConfig.version = 1 end
 
-    for key, _ in pairs(kinds) do
+    for key in pairs(kinds) do
       if type(idTipConfig[configKey(key)]) ~= "boolean" then
-        idTipConfig[configKey(key)] = not contains(defaultDisabledKinds, key)
+        idTipConfig[configKey(key)] = not defaultDisabledKinds[key]
       end
     end
 
@@ -562,76 +577,36 @@ f:SetScript("OnEvent", function(_, _, addon)
       idTipConfig[configKey("bonus")] = false
       idTipConfig.version = 2
     end
+
+    -- after the defaults, since each setting binds a key that must already exist
+    if Settings and Settings.RegisterVerticalLayoutCategory then
+      local category = registerOptions()
+      SLASH_IDTIP1 = "/idtip"
+      function SlashCmdList.IDTIP() Settings.OpenToCategory(category.ID) end
+    end
   elseif addon == "Blizzard_AchievementUI" then
     if AchievementTemplateMixin then
-      -- dragonflight
+      -- retail
       hook(AchievementTemplateMixin, "OnEnter", achievementOnEnter)
       hook(AchievementTemplateMixin, "OnLeave", GameTooltip_Hide)
 
-      local hooked = {}
-      local getter = function(pool)
-        return function(self, index)
-          if not self or not self[pool] then return end
-          local frame = self[pool][index]
-          frame.___index = index
-          if frame and not hooked[frame] then
-            hookScript(frame, "OnEnter", criteriaOnEnter(index))
-            hookScript(frame, "OnLeave", GameTooltip_Hide)
-            hooked[frame] = true
-          end
-        end
+      -- miniAchievements are earlier links in a chain, not criteria, and carry no id
+      for method, kind in pairs({GetCriteria = "criterias", GetMeta = "metas", GetProgressBar = "progressBars"}) do
+        hook(AchievementTemplateMixin:GetObjectiveFrame(), method, function(self, index)
+          if self and self[kind] then hookCriteria(self[kind][index], kind, index) end
+        end)
       end
-      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetCriteria", getter("criterias"))
-      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetMiniAchievement", getter("miniAchivements"))
-      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetMeta", getter("metas"))
-      hook(AchievementTemplateMixin:GetObjectiveFrame(), "GetProgressBar", getter("progressBars"))
     elseif AchievementFrameAchievementsContainer then
-      -- pre-dragonflight
+      -- classic and anniversary
       for _, button in ipairs(AchievementFrameAchievementsContainer.buttons) do
         hookScript(button, "OnEnter", achievementOnEnter)
         hookScript(button, "OnLeave", GameTooltip_Hide)
-
-        local hooked = {}
-        hook(_G, "AchievementButton_GetCriteria", function(index, renderOffScreen)
-          local frame = _G["AchievementFrameCriteria" .. (renderOffScreen and "OffScreen" or "") .. index]
-          if frame and not hooked[frame] then
-            hookScript(frame, "OnEnter", criteriaOnEnter(index))
-            hookScript(frame, "OnLeave", GameTooltip_Hide)
-            hooked[frame] = true
-          end
-        end)
       end
+
+      hook(_G, "AchievementButton_GetCriteria", function(index)
+        hookCriteria(_G["AchievementFrameCriteria" .. index], "criterias", index)
+      end)
     end
-  elseif addon == "Blizzard_Collections" then
-    hook(CollectionWardrobeUtil, "SetAppearanceTooltip", function(_frame, sources)
-      local visualIDs = {}
-      local sourceIDs = {}
-      local itemIDs = {}
-
-      for i = 1, #sources do
-        if sources[i].visualID and not contains(visualIDs, sources[i].visualID) then table.insert(visualIDs, sources[i].visualID) end
-        if sources[i].sourceID and not contains(sourceIDs, sources[i].sourceID) then table.insert(sourceIDs, sources[i].sourceID) end
-        if sources[i].itemID and not contains(itemIDs, sources[i].itemID) then table.insert(itemIDs, sources[i].itemID) end
-      end
-
-      if #visualIDs == 1 then add(GameTooltip, visualIDs[1], "visual") end
-      if #sourceIDs == 1 then add(GameTooltip, sourceIDs[1], "source") end
-      if #itemIDs == 1 then add(GameTooltip, itemIDs[1], "item") end
-
-      if #visualIDs > 1 then add(GameTooltip, visualIDs, "visual") end
-      if #sourceIDs > 1 then add(GameTooltip, sourceIDs, "source") end
-      if #itemIDs > 1 then add(GameTooltip, itemIDs, "item") end
-    end)
-
-    -- Pet Journal selected pet info icon
-    hookScript(PetJournalPetCardPetInfo, "OnEnter", function()
-      if not C_PetJournal or not C_PetBattles.GetPetInfoBySpeciesID then return end
-      if PetJournalPetCard.speciesID then
-        local npcId = select(4, C_PetJournal.GetPetInfoBySpeciesID(PetJournalPetCard.speciesID));
-        add(GameTooltip, PetJournalPetCard.speciesID, "species");
-        add(GameTooltip, npcId, "unit");
-      end
-    end);
   elseif addon == "Blizzard_GarrisonUI" then
     -- ability id
     hook(_G, "AddAutoCombatSpellToTooltip", function (tooltip, info)
@@ -641,74 +616,3 @@ f:SetScript("OnEvent", function(_, _, addon)
     end)
   end
 end)
-
--------------------------------------------------------------------------------
--- Options panel
--------------------------------------------------------------------------------
-
-local panel = CreateFrame("Frame")
-panel.name = addonName
-panel:Hide()
-
-panel:SetScript("OnShow", function()
-  local function createCheckbox(label, key)
-    local checkBox = CreateFrame("CheckButton", addonName .. "Check" .. label, panel, "ChatConfigCheckButtonTemplate")
-    checkBox:SetChecked(idTipConfig[key])
-    checkBox:HookScript("OnClick", function(self)
-      local checked = self:GetChecked()
-      idTipConfig[key] = checked
-    end)
-    checkBox.Text:SetText(label)
-    return checkBox
-  end
-
-  local title = panel:CreateFontString("ARTWORK", nil, "GameFontNormalLarge")
-  title:SetPoint("TOPLEFT", 16, -16)
-  title:SetText(addonName)
-
-  local enabledCheckBox = createCheckbox("Enabled", "enabled")
-  enabledCheckBox:SetPoint("TOPLEFT", title, "BOTTOMLEFT", 0, -16)
-
-  local kindsTitle = panel:CreateFontString("ARTWORK", nil, "GameFontNormal")
-  kindsTitle:SetPoint("TOPLEFT", enabledCheckBox, "BOTTOMLEFT", 0, -16)
-  kindsTitle:SetText("Types")
-
-  local index = 0
-  local rowHeight = 24
-  local columnWidth = 150
-  local rowNum = 10
-
-  local keys = {}
-  for key in pairs(kinds) do table.insert(keys, key) end
-  table.sort(keys)
-
-  for _, key in pairs(keys) do
-    local checkBox = createCheckbox(kinds[key], configKey(key))
-    local columnIndex = math.floor(index / rowNum)
-    local offsetRight = columnIndex * columnWidth
-    local offsetUp = -(index * rowHeight) + (rowHeight * rowNum  * columnIndex) - 16
-    checkBox:SetPoint("TOPLEFT", kindsTitle, "BOTTOMLEFT", offsetRight, offsetUp)
-    index = index + 1
-  end
-
-  panel:SetScript("OnShow", nil)
-end)
-
-local categoryId = nil
-if InterfaceOptions_AddCategory then
-  InterfaceOptions_AddCategory(panel)
-elseif Settings and Settings.RegisterAddOnCategory and Settings.RegisterCanvasLayoutCategory then
-  local category = Settings.RegisterCanvasLayoutCategory(panel, panel.name)
-  categoryId = category.ID
-  Settings.RegisterAddOnCategory(category);
-end
-
-SLASH_IDTIP1 = "/idtip"
-function SlashCmdList.IDTIP()
-  if InterfaceOptionsFrame_OpenToCategory then
-    InterfaceOptionsFrame_OpenToCategory(panel)
-    InterfaceOptionsFrame_OpenToCategory(panel)
-  elseif categoryId then
-    Settings.OpenToCategory(categoryId)
-  end
-end

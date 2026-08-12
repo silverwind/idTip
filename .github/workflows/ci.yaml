@@ -16,7 +16,7 @@ jobs:
           node-version: latest
       - uses: leafo/gh-actions-lua@v13
         with:
-          luaVersion: "5.4"
+          luaVersion: "luajit" # WoW's dialect is Lua 5.1
       - uses: leafo/gh-actions-luarocks@v6
       - run: make lint
       - run: make test
