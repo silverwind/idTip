@@ -30,8 +30,8 @@ importers:
         specifier: 4.0.3
         version: 4.0.3(prettier@3.9.6)
       versions:
-        specifier: 15.1.3
-        version: 15.1.3
+        specifier: 15.3.4
+        version: 15.3.4
 
 packages:
 
@@ -178,8 +178,8 @@ packages:
     engines: {node: '>=22'}
     hasBin: true
 
-  versions@15.1.3:
-    resolution: {integrity: sha512-aPnR9Hqs6tbG03RIaqLt+35tjTKp7vXZm5kfKWE8bwjUXizq0O/Zqx4s6z67RQEGPR30kTmEvvyNz302Q5C1IQ==}
+  versions@15.3.4:
+    resolution: {integrity: sha512-mo8pDpZFbj7DEAwDwLXZ3BHuJQFQNa8YIiXfv82zECHIK9A5/dgzGNPq2AtxXCZ9OXEGACGLZaUjxd4iTdG5ZQ==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -290,4 +290,4 @@ snapshots:
 
   updates@17.19.1: {}
 
-  versions@15.1.3: {}
+  versions@15.3.4: {}

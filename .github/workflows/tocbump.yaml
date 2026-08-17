@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: write
+  actions: write
 
 jobs:
   main:
@@ -15,9 +16,6 @@ jobs:
       - uses: actions/checkout@v7
         with:
           fetch-depth: 0
-          # needed for the action to be able trigger other actions, e.g the release
-          # https://github.com/orgs/community/discussions/27028#discussioncomment-3254367
-          ssh-key: ${{ secrets.DEPLOY_KEY }}
       - uses: pnpm/action-setup@v6
       - uses: actions/setup-node@v7
         with:
@@ -31,6 +29,11 @@ jobs:
             git commit -am "update toc"
             make patch
             git push --tags origin master
+            curl -fsS -X POST "$GITHUB_API_URL/repos/$GITHUB_REPOSITORY/actions/workflows/release.yaml/dispatches" \
+              -H "Authorization: Bearer $GITHUB_TOKEN" -H "Content-Type: application/json" \
+              -d "{\"ref\": \"$(git describe --tags --abbrev=0)\"}"
           else
             echo "Nothing to commit"
           fi
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
