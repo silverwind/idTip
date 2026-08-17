@@ -50,8 +50,8 @@ patch minor major: node_modules
 # walks .git and node_modules and the launcher hangs on "Initializing".
 .PHONY: chmod
 chmod:
-	@find . -type d -depth 1 -exec chmod 0755 {} \;
-	@find . ! -path '*.sh' -type f -depth 1 -exec chmod 0644 {} \;
+	@find . -mindepth 1 -maxdepth 1 -type d -exec chmod 0755 {} \;
+	@find . -mindepth 1 -maxdepth 1 ! -path '*.sh' -type f -exec chmod 0644 {} \;
 	@find .github -type d -exec chmod 0755 {} \;
 	@find .github -type f -exec chmod 0644 {} \;
 
