@@ -9,8 +9,8 @@ importers:
   .:
     devDependencies:
       '@types/node':
-        specifier: 26.1.1
-        version: 26.1.1
+        specifier: 26.2.0
+        version: 26.2.0
       '@typescript/native-preview':
         specifier: 7.0.0-dev.20260707.2
         version: 7.0.0-dev.20260707.2
@@ -21,17 +21,17 @@ importers:
         specifier: 6.0.3
         version: 6.0.3
       typescript-config-silverwind:
-        specifier: 20.0.1
-        version: 20.0.1
+        specifier: 20.0.3
+        version: 20.0.3
       updates:
-        specifier: 17.19.1
-        version: 17.19.1
+        specifier: 18.0.4
+        version: 18.0.4
       updates-config-silverwind:
-        specifier: 4.0.3
-        version: 4.0.3(prettier@3.9.6)
+        specifier: 4.0.5
+        version: 4.0.5(prettier@3.9.6)
       versions:
-        specifier: 15.3.4
-        version: 15.3.4
+        specifier: 15.3.5
+        version: 15.3.5
 
 packages:
 
@@ -50,8 +50,8 @@ packages:
   '@sinclair/typebox@0.34.52':
     resolution: {integrity: sha512-XiMQh7qqVlxZzcVD+kkGMNGMzcTrDMLWI7S4x7z1MkCkbDPrekpZXEUK0eZqZFMuHQg2a2DZOcDIh9o5v3Gonw==}
 
-  '@types/node@26.1.1':
-    resolution: {integrity: sha512-nxAkRSVkN1Y0JC1W8ky/fTfkGsMmcrRsbx+3XoZE+rMOX71kLYTV7fLXpqud1GpbpP5TuffXFqfX7fH2GgZREw==}
+  '@types/node@26.2.0':
+    resolution: {integrity: sha512-5IviulTZeRNp2vAJ514cc/HUlY5nZ9fCbq9DMyC52BrhFZACo3nI0R7qBxhQmo/d27NFe96ur/b7Wwxklda+kg==}
 
   '@typescript/native-preview-darwin-arm64@7.0.0-dev.20260707.2':
     resolution: {integrity: sha512-wny2pgKjGbiZtnOIHVa3tXC1UfDqxNEFzyPGmiqybedG8hipG2Nfp0l5UxbaKCjkLacUpH/W5bP2hBOMVhCOzg==}
@@ -156,8 +156,8 @@ packages:
     resolution: {integrity: sha512-qpCAvRl9stuOHveKsn7HncJRvv501qIacKzQlO/+Lwxc9+0q2wLyv4Dfvt80/DPn2pqOBsJdDiogXGR9+OvwRw==}
     engines: {node: '>=8'}
 
-  typescript-config-silverwind@20.0.1:
-    resolution: {integrity: sha512-YHdCu2NtU9q8qybmx6jUZm1fzsWPoeFUczcAhesx+wlLpYl99ZqAO24u6I25mvhrnVCLb9ZblOe4B2SIz1DvTQ==}
+  typescript-config-silverwind@20.0.3:
+    resolution: {integrity: sha512-qbNF56RU8sxxQnUtSZSK6A/jdjQrrCd5IESkEk8Ze/HL6/NHnd1WTqca2OW/N2kwaYxcpoTZLQr90EG8zJFQhw==}
 
   typescript@6.0.3:
     resolution: {integrity: sha512-y2TvuxSZPDyQakkFRPZHKFm+KKVqIisdg9/CZwm9ftvKXLP8NRWj38/ODjNbr43SsoXqNuAisEf1GdCxqWcdBw==}
@@ -167,19 +167,19 @@ packages:
   undici-types@8.3.0:
     resolution: {integrity: sha512-j375ScV60dom+YkPFIfTLcOiPxkN/buHz5GobjLhixFuANaNs3C9l4GmrWqejgXWJ7BbJcFYpTEUkS1Ge8bpZQ==}
 
-  updates-config-silverwind@4.0.3:
-    resolution: {integrity: sha512-GboduGoiZtZxSbRuZOzE6YR/7Mm3tjEx4dSLxrmfEmjmHQo/RmDX8h5pvrrfaeh5z/exmHyXqRB/jZ34x6/PFA==}
+  updates-config-silverwind@4.0.5:
+    resolution: {integrity: sha512-7gDCXq7d5Ud6MW15Hb42FEJKTkHO5ODIwWIIAnSkfwl9h3pI52c5vRXcuGVCpO+vU8BqZjJBv+tdweO5D71x8w==}
     engines: {node: '>=22'}
     peerDependencies:
       prettier: '*'
 
-  updates@17.19.1:
-    resolution: {integrity: sha512-+IWKvAJrP2i42/1xo5O4oZOGTv5P586xqBozjAAs8yPwEw3Dc8MPdV8l4nBejecfDRHrw8N/Zj0T11scOlgXYA==}
+  updates@18.0.4:
+    resolution: {integrity: sha512-Ngi3hqm5SzohyFaU5W5iOMOHWSdhOB0VfqfXyFv6LCzzCeApOlH0ft5cGH3sjZPnsg7brzKKJ5oQS7wKx/7n5w==}
     engines: {node: '>=22'}
     hasBin: true
 
-  versions@15.3.4:
-    resolution: {integrity: sha512-mo8pDpZFbj7DEAwDwLXZ3BHuJQFQNa8YIiXfv82zECHIK9A5/dgzGNPq2AtxXCZ9OXEGACGLZaUjxd4iTdG5ZQ==}
+  versions@15.3.5:
+    resolution: {integrity: sha512-mXbFMnEvCRwSxn6fzSaX/r8SLvnWsO+N8cUOpyLbtr2YRBr6KH/asjkWScsehs1jWccPxXGwe1GLAisa60HhUg==}
     engines: {node: '>=22'}
     hasBin: true
 
@@ -195,7 +195,7 @@ snapshots:
 
   '@sinclair/typebox@0.34.52': {}
 
-  '@types/node@26.1.1':
+  '@types/node@26.2.0':
     dependencies:
       undici-types: 8.3.0
 
@@ -278,16 +278,16 @@ snapshots:
     dependencies:
       has-flag: 4.0.0
 
-  typescript-config-silverwind@20.0.1: {}
+  typescript-config-silverwind@20.0.3: {}
 
   typescript@6.0.3: {}
 
   undici-types@8.3.0: {}
 
-  updates-config-silverwind@4.0.3(prettier@3.9.6):
+  updates-config-silverwind@4.0.5(prettier@3.9.6):
     dependencies:
       prettier: 3.9.6
 
-  updates@17.19.1: {}
+  updates@18.0.4: {}
 
-  versions@15.3.4: {}
+  versions@15.3.5: {}
