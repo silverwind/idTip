@@ -89,13 +89,13 @@ local function configKey(key)
 end
 
 local function hook(target, method, callback)
-  if target and target[method] then
+  if callback and target and target[method] then
     hooksecurefunc(target, method, callback)
   end
 end
 
 local function hookScript(target, script, callback)
-  if target and target:HasScript(script) then
+  if callback and target and target.HasScript and target:HasScript(script) then
     target:HookScript(script, callback)
   end
 end
@@ -272,7 +272,7 @@ end
 -- Only retail mixes that in, see the classic section below.
 
 -- absent on classic era, where TooltipDataHandler.lua is ExcludeLoadGameType vanilla
-if TooltipDataProcessor then
+if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
   TooltipDataProcessor.AddTooltipPostCall(TooltipDataProcessor.AllTypes, function(tooltip, data)
     if not data or not data.type then return end
     if isSecret(data.type) or isSecret(data.guid) then return end -- indexing with a secret errors
@@ -382,7 +382,9 @@ if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
   local function addPetInfo(speciesId)
     if not speciesId then return end
     add(GameTooltip, speciesId, "species")
-    add(GameTooltip, select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId)), "unit")
+    if C_PetJournal.GetPetInfoBySpeciesID then
+      add(GameTooltip, select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId)), "unit")
+    end
   end
 
   hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
@@ -463,10 +465,11 @@ end
 -- Blizzard pools frames per criteria kind, so a pool index equals the criteria
 -- index only while an achievement mixes no kinds
 local function criteriaIndex(achievementId, kind, poolIndex)
+  if not GetAchievementNumCriteria or not GetAchievementCriteriaInfo then return end
   for index = 1, GetAchievementNumCriteria(achievementId) do
     local _, criteriaType, _, _, _, _, flags, assetId = GetAchievementCriteriaInfo(achievementId, index)
     local frameKind = criteriaType == CRITERIA_TYPE_ACHIEVEMENT and assetId and "metas"
-      or bit.band(flags or 0, EVALUATION_TREE_FLAG_PROGRESS_BAR) ~= 0 and "progressBars"
+      or bit.band(flags or 0, EVALUATION_TREE_FLAG_PROGRESS_BAR or 0) ~= 0 and "progressBars"
       or "criterias"
     if frameKind == kind then
       poolIndex = poolIndex - 1
@@ -515,23 +518,28 @@ if C_PetBattles then
   -- addLine cannot reach it and this appends to a font string instead
   local function addPetBattleAbility(id)
     if not shouldAdd(id, "ability") then return end
-    local description = PetBattlePrimaryAbilityTooltip.Description
+    local description = PetBattlePrimaryAbilityTooltip and PetBattlePrimaryAbilityTooltip.Description
+    if not description then return end
     description:SetText((description:GetText() or "") .. "\r\r" .. kinds.ability .. "|cffffffff " .. id .. "|r")
   end
 
   -- retail dropped the LE_ constant in favour of the enum
-  local ally = Enum.BattlePetOwner and Enum.BattlePetOwner.Ally or LE_BATTLE_PET_ALLY
+  local ally = Enum and Enum.BattlePetOwner and Enum.BattlePetOwner.Ally or LE_BATTLE_PET_ALLY
 
-  hook(_G, "PetBattleAbilityButton_OnEnter", function(button)
-    if button:GetEffectiveAlpha() > 0 then
-      addPetBattleAbility(C_PetBattles.GetAbilityInfo(ally, C_PetBattles.GetActivePet(ally), button:GetID()))
-    end
-  end)
+  if C_PetBattles.GetAbilityInfo and C_PetBattles.GetActivePet then
+    hook(_G, "PetBattleAbilityButton_OnEnter", function(button)
+      if button:GetEffectiveAlpha() > 0 then
+        addPetBattleAbility(C_PetBattles.GetAbilityInfo(ally, C_PetBattles.GetActivePet(ally), button:GetID()))
+      end
+    end)
+  end
 
-  hook(_G, "PetBattleAura_OnEnter", function(frame)
-    local parent = frame:GetParent()
-    addPetBattleAbility(C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
-  end)
+  if C_PetBattles.GetAuraInfo then
+    hook(_G, "PetBattleAura_OnEnter", function(frame)
+      local parent = frame:GetParent()
+      addPetBattleAbility(C_PetBattles.GetAuraInfo(parent.petOwner, parent.petIndex, frame.auraIndex))
+    end)
+  end
 end
 
 -- native settings list, so Blizzard owns layout, hit areas and search, and each
@@ -589,10 +597,13 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
     end
 
     -- after the defaults, since each setting binds a key that must already exist
-    if Settings and Settings.RegisterVerticalLayoutCategory then
+    if Settings and Settings.RegisterVerticalLayoutCategory and Settings.RegisterAddOnSetting
+      and Settings.CreateCheckbox and Settings.RegisterAddOnCategory then
       local category = registerOptions()
-      SLASH_IDTIP1 = "/idtip"
-      function SlashCmdList.IDTIP() Settings.OpenToCategory(category.ID) end
+      if Settings.OpenToCategory then
+        SLASH_IDTIP1 = "/idtip"
+        function SlashCmdList.IDTIP() Settings.OpenToCategory(category.ID) end
+      end
     end
   elseif addon == "Blizzard_AchievementUI" then
     if AchievementTemplateMixin then
@@ -601,12 +612,13 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
       hook(AchievementTemplateMixin, "OnLeave", GameTooltip_Hide)
 
       -- miniAchievements are earlier links in a chain, not criteria, and carry no id
+      local objectives = AchievementTemplateMixin.GetObjectiveFrame and AchievementTemplateMixin:GetObjectiveFrame()
       for method, kind in pairs({GetCriteria = "criterias", GetMeta = "metas", GetProgressBar = "progressBars"}) do
-        hook(AchievementTemplateMixin:GetObjectiveFrame(), method, function(self, index)
+        hook(objectives, method, function(self, index)
           if self and self[kind] then hookCriteria(self[kind][index], kind, index) end
         end)
       end
-    elseif AchievementFrameAchievementsContainer then
+    elseif AchievementFrameAchievementsContainer and AchievementFrameAchievementsContainer.buttons then
       -- classic and anniversary
       for _, button in ipairs(AchievementFrameAchievementsContainer.buttons) do
         hookScript(button, "OnEnter", achievementOnEnter)

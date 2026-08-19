@@ -818,7 +818,7 @@ describe("client profiles", function()
   test("loads with any single Blizzard namespace missing", function()
     for _, global in ipairs({"C_Spell", "C_Item", "C_PetBattles", "C_PetJournal", "C_CurrencyInfo", "C_QuestLog",
       "Settings", "WHITE_FONT_COLOR", "GameTooltip", "ItemRefTooltip", "TalentDisplayMixin", "AreaPOIPinMixin",
-      "VignettePinMixin", "GetActionInfo", "TooltipDataProcessor", "CollectionWardrobeUtil"}) do
+      "VignettePinMixin", "GetActionInfo", "TooltipDataProcessor", "CollectionWardrobeUtil", "Enum"}) do
       -- false, not nil, since the env falls through to _G
       local ok, err = pcall(loadProfile, function(profileEnv) profileEnv[global] = false end)
       if not ok then error("a missing " .. global .. " breaks load: " .. tostring(err), 2) end
@@ -865,6 +865,23 @@ describe("client profiles", function()
     profile.GameTooltip:_reset()
     profile.hooks.SetCurrencyByID(profile.GameTooltip, 3008)
     assertEq(findLine(profile.GameTooltip, "CurrencyID").right, 3008)
+  end)
+
+  -- a namespace can also lose a single function, which must cost that id alone
+  test("a removed member function costs its id, not the rest", function()
+    local profile = loadProfile(function(profileEnv)
+      profileEnv.C_PetJournal.GetPetInfoBySpeciesID = nil
+      profileEnv.C_PetBattles.GetAbilityInfo = nil
+      profileEnv.Settings.OpenToCategory = nil
+    end)
+
+    mockState.petSpeciesId = 42
+    profile.hooks.SetCompanionPet(nil, "petguid") -- throws when the gone function is called blind
+    assertEq(findLine(profile.GameTooltip, "SpeciesID").right, 42)
+    assertEq(findLine(profile.GameTooltip, "NpcID"), nil) -- the only id that function carried
+
+    assertEq(profile.hooks.PetBattleAbilityButton_OnEnter, nil) -- unhooked, rather than hooked and throwing
+    assertEq(profile.SlashCmdList.IDTIP, nil) -- a command that could not open anything
   end)
 
   test("classic item tooltips work without GetItemLinkByGUID", function()
