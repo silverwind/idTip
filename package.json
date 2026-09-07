@@ -10,5 +10,5 @@
     "updates-config-silverwind": "4.0.5",
     "versions": "15.3.5"
   },
-  "packageManager": "pnpm@11.22.0"
+  "packageManager": "pnpm@12.3.4"
 }
