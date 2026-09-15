@@ -1,6 +1,6 @@
 ## Interface: 10000, 11509, 20506, 38002, 50504, 120001, 120100, 120105
 ## Title: idTip
-## Version: 12.1.1
+## Version: 12.1.2
 ## Notes: Adds various IDs to tooltips
 ## Author: silverwind
 ## X-Curse-Project-ID: 24541
