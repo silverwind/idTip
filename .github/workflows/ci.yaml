@@ -18,5 +18,4 @@ jobs:
         with:
           luaVersion: "luajit" # WoW's dialect is Lua 5.1
       - uses: leafo/gh-actions-luarocks@v6
-      - run: make lint
-      - run: make test
+      - run: make deps lint test build
