@@ -1,6 +1,6 @@
 local addonName = ...
 
--- gated, so a namespace Blizzard drops costs one kind, not the addon. Callers check.
+-- gated, so a namespace Blizzard drops costs its ids, not the addon. Callers check.
 local GetSpellTexture = C_Spell and C_Spell.GetSpellTexture
 local GetItemIconByID = C_Item and C_Item.GetItemIconByID
 local GetItemInfo = C_Item and C_Item.GetItemInfo
@@ -41,6 +41,13 @@ local kinds = {
 }
 
 local defaultDisabledKinds = {bonus = true, traitnode = true, traitentry = true, traitdef = true}
+
+-- built once, since the hover path would otherwise concatenate these per line
+local configKeys, plurals = {}, {}
+for kind, label in pairs(kinds) do
+  configKeys[kind] = kind .. "Enabled"
+  plurals[kind] = label .. "s"
+end
 
 -- options order, every kind in exactly one section, pinned by a test
 local kindSections = {
@@ -84,10 +91,6 @@ local function addUnique(list, value)
   list[#list + 1] = value
 end
 
-local function configKey(key)
-  return key .. "Enabled"
-end
-
 local function hook(target, method, callback)
   if callback and target and target[method] then
     hooksecurefunc(target, method, callback)
@@ -99,8 +102,6 @@ local function hookScript(target, script, callback)
     target:HookScript(script, callback)
   end
 end
-
-local function inPetBattle() return C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() end
 
 local function getTooltipName(tooltip)
   return tooltip:GetName()
@@ -132,8 +133,7 @@ end
 
 -- Joins later ids onto the line this kind already has. The left cell must match
 -- exactly, so no plural or foreign label counts as ours. Returns whether one existed.
-local function extendLine(tooltip, name, label, id)
-  local plural = label .. "s"
+local function extendLine(tooltip, name, label, plural, id)
   for index = tooltip:NumLines(), 1, -1 do
     local text, left = cellText(name, "Left", index)
     if text == label or text == plural then
@@ -161,7 +161,7 @@ local function extendLine(tooltip, name, label, id)
 end
 
 local function isEnabled(kind)
-  return not idTipConfig or (idTipConfig.enabled and idTipConfig[configKey(kind)])
+  return not idTipConfig or (idTipConfig.enabled and idTipConfig[configKeys[kind]])
 end
 
 -- one policy for every writer, so the pet battle one cannot drift from this
@@ -177,12 +177,12 @@ local function addLine(tooltip, id, kind)
   if not ok or not name then return end
 
   local multiple = type(id) == "table"
-  local label = kinds[kind]
+  local label, plural = kinds[kind], plurals[kind]
 
   -- the rendered lines are the only per-tooltip state that cannot go stale
-  if extendLine(tooltip, name, label, id) then return end
+  if extendLine(tooltip, name, label, plural, id) then return end
 
-  local left = label .. (multiple and "s" or "")
+  local left = multiple and plural or label
   local right = multiple and table.concat(id, ",") or id
   tooltip:AddDoubleLine(left, right, nil, nil, nil, white.r, white.g, white.b)
   tooltip:Show()
@@ -213,7 +213,7 @@ end
 
 -- during a battle the unit is the pet, whose npc id belongs on no tooltip
 local function addNpc(tooltip, guid, fallbackId)
-  if inPetBattle() then return end
+  if C_PetBattles and C_PetBattles.IsInBattle and C_PetBattles.IsInBattle() then return end
   add(tooltip, npcIdFromGUID(guid or "") or fallbackId, "unit")
 end
 
@@ -221,26 +221,27 @@ local function addItemInfo(tooltip, link)
   local itemString = link and string.match(link, "item:([%-?%d:]+)")
   if not itemString then return false end
 
-  local itemSplit = {}
-  -- never matches empty, so negative and blank fields keep position on Lua 5.1
-  for value in string.gmatch(itemString .. ":", "([^:]*):") do
-    itemSplit[#itemSplit + 1] = value
-  end
-
   local itemId = string.match(link, "item:(%d*)")
   if not itemId or itemId == "" or itemId == "0" then return false end
   add(tooltip, itemId, "item")
 
-  local enchantId = tonumber(itemSplit[2])
-  if enchantId and enchantId ~= 0 then add(tooltip, itemSplit[2], "enchant") end
+  local enchant = string.match(itemString, "^[^:]*:([^:]*)")
+  local enchantId = tonumber(enchant)
+  if enchantId and enchantId ~= 0 then add(tooltip, enchant, "enchant") end
 
   -- both kinds are checked here as well as in addLine, so a disabled one costs
-  -- neither a table per tooltip nor four gem queries
+  -- neither a link scan nor four gem queries
   if isEnabled("bonus") then
-    local bonuses = {}
-    -- a crafted link can claim more bonus ids than it carries, and the count is the bound
-    for index = 1, math.min(tonumber(itemSplit[13]) or 0, #itemSplit - 13) do
-      bonuses[#bonuses + 1] = itemSplit[13 + index]
+    local bonuses, fieldIndex, bonusCount = {}, 0, 0
+    -- never matches empty, so negative and blank fields keep position on Lua 5.1
+    for value in string.gmatch(itemString .. ":", "([^:]*):") do
+      fieldIndex = fieldIndex + 1
+      if fieldIndex == 13 then
+        bonusCount = tonumber(value) or 0
+      elseif fieldIndex > 13 then
+        if fieldIndex > 13 + bonusCount then break end
+        bonuses[#bonuses + 1] = value
+      end
     end
     add(tooltip, bonuses, "bonus")
   end
@@ -256,7 +257,7 @@ local function addItemInfo(tooltip, link)
 
   if GetItemInfo then
     local expansionId, setId = select(15, GetItemInfo(itemId))
-    if expansionId and expansionId ~= 254 then -- always 254 on classic, therefor uninteresting
+    if expansionId and expansionId ~= 254 then -- always 254 on classic, therefore uninteresting
       add(tooltip, expansionId, "expansion")
     end
     if setId then add(tooltip, setId, "set") end
@@ -332,7 +333,7 @@ end
 local function onSetHyperlink(tooltip, link)
   local kind, id = string.match(link, "^(%a+):(%d+)")
   if kind == "enchant" or kind == "trade" then kind = "spell" end
-  if kind and kinds[kind] then add(tooltip, id, kind) end
+  if kinds[kind] then add(tooltip, id, kind) end
 end
 hook(GameTooltip, "SetHyperlink", onSetHyperlink)
 hook(ItemRefTooltip, "SetHyperlink", onSetHyperlink)
@@ -379,16 +380,13 @@ hook(GameTooltip, "SetTalent", onSetTalent)
 hook(GameTooltip, "SetPvpTalent", onSetTalent)
 
 if C_PetJournal and C_PetJournal.GetPetInfoByPetID then
-  local function addPetInfo(speciesId)
+  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
+    local speciesId = C_PetJournal.GetPetInfoByPetID(petId)
     if not speciesId then return end
     add(GameTooltip, speciesId, "species")
     if C_PetJournal.GetPetInfoBySpeciesID then
       add(GameTooltip, select(4, C_PetJournal.GetPetInfoBySpeciesID(speciesId)), "unit")
     end
-  end
-
-  hook(GameTooltip, "SetCompanionPet", function(_tooltip, petId)
-    addPetInfo(C_PetJournal.GetPetInfoByPetID(petId))
   end)
 end
 
@@ -416,10 +414,9 @@ end
 -- early return, so ownership is the only signal. It also picks the frame, since
 -- classic vignettes fill WorldMapTooltip.
 local function pinTooltip(pin)
-  if not pin then return end
-  for _, tooltip in ipairs({GameTooltip, WorldMapTooltip}) do -- ipairs stops at the nil
-    if tooltip:IsShown() and tooltip:IsOwned(pin) then return tooltip end
-  end
+  if not pin or not GameTooltip then return end
+  if GameTooltip:IsShown() and GameTooltip:IsOwned(pin) then return GameTooltip end
+  if WorldMapTooltip and WorldMapTooltip:IsShown() and WorldMapTooltip:IsOwned(pin) then return WorldMapTooltip end
 end
 
 hook(AreaPOIPinMixin, "TryShowTooltip", function(pin)
@@ -564,7 +561,7 @@ local function registerOptions()
   for _, section in ipairs(kindSections) do
     addHeader(section.name)
     for _, kind in ipairs(section) do
-      addCheckbox(configKey(kind), kinds[kind], not defaultDisabledKinds[kind])
+      addCheckbox(configKeys[kind], kinds[kind], not defaultDisabledKinds[kind])
     end
   end
 
@@ -584,15 +581,15 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
     -- 1, not 2, so a config written before the field existed still migrates
     if type(idTipConfig.version) ~= "number" then idTipConfig.version = 1 end
 
-    for key in pairs(kinds) do
-      if type(idTipConfig[configKey(key)]) ~= "boolean" then
-        idTipConfig[configKey(key)] = not defaultDisabledKinds[key]
+    for kind, key in pairs(configKeys) do
+      if type(idTipConfig[key]) ~= "boolean" then
+        idTipConfig[key] = not defaultDisabledKinds[kind]
       end
     end
 
     -- config migrations
-    if idTipConfig.version == 1 then -- v1 to v2 - disable bonus kind
-      idTipConfig[configKey("bonus")] = false
+    if idTipConfig.version == 1 then
+      idTipConfig[configKeys.bonus] = false
       idTipConfig.version = 2
     end
 
@@ -630,7 +627,6 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
       end)
     end
   elseif addon == "Blizzard_GarrisonUI" then
-    -- ability id
     hook(_G, "AddAutoCombatSpellToTooltip", function (tooltip, info)
       if info and info.autoCombatSpellID then
         add(tooltip, info.autoCombatSpellID, "ability")
