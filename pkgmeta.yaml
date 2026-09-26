@@ -3,9 +3,11 @@ ignore:
   - "*.js"
   - "*.json"
   - "*.md"
+  - "*.sh"
   - "*.ts"
   - "*.txt"
   - "*.yaml"
   - CHANGELOG.txt
   - LICENSE
   - Makefile
+  - idTip_test.lua
