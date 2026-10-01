@@ -3,6 +3,7 @@ ignore:
   - "*.js"
   - "*.json"
   - "*.md"
+  - "*.png"
   - "*.sh"
   - "*.ts"
   - "*.txt"

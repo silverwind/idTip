@@ -2,7 +2,7 @@
 
 Adds various IDs to the WoW ingame tooltips.
 
-![Screenshot](https://i.imgur.com/ngS3fc9.jpg)
+![Screenshot](screenshot.png)
 
 ## Installation
 
