@@ -1,5 +1,6 @@
 savePrefix: ''
 updateNotifier: false
-strictDepBuilds: false
+ignoreScripts: true
 minimumReleaseAge: 0
 verifyDepsBeforeRun: false
+dlxCacheMaxAge: 0
