@@ -10,7 +10,7 @@ lint: node_modules
 	command -v luacheck >/dev/null 2>&1 || luarocks install luacheck
 	luacheck idTip.lua idTip_test.lua
 	go run github.com/rhysd/actionlint/cmd/actionlint@v1
-	pnpm exec tsgo
+	pnpm exec tsc
 
 .PHONY: lint-fix
 lint-fix: lint

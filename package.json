@@ -1,12 +1,12 @@
 {
   "type": "module",
+  "packageManager": "pnpm@12.8.1",
   "devDependencies": {
     "@types/node": "26.6.3",
-    "@typescript/native-preview": "7.0.0-dev.20260707.2",
+    "typescript": "7.0.2",
     "typescript-config-silverwind": "21.0.2",
     "updates": "19.1.0",
-    "updates-config-silverwind": "4.0.9",
+    "updates-config-silverwind": "4.1.0",
     "versions": "15.5.2"
-  },
-  "packageManager": "pnpm@12.8.1"
+  }
 }

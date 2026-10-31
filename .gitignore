@@ -1,5 +1,7 @@
-.DS_Store
+/.vscode
 /node_modules
+/npm-debug.log*
 .pnpm-store
 .pnpm-debug.log*
+.DS_Store
 luacov.*.out
