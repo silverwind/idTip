@@ -1,5 +1,5 @@
 /.vscode
-/node_modules
+node_modules
 /npm-debug.log*
 .pnpm-store
 .pnpm-debug.log*
