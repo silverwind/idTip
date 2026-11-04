@@ -6,6 +6,7 @@
 ## Author: silverwind
 ## X-Curse-Project-ID: 24541
 ## X-WoWI-ID: 17033
+## X-Wago-ID: vNAWO9Ko
 ## IconTexture: Interface\ICONS\Achievement_Reputation_KirinTor
 ## SavedVariables: idTipConfig
 idTip.lua
