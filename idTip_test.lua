@@ -94,7 +94,9 @@ local function loadInto(reduce)
   env.WHITE_FONT_COLOR = {r = 1, g = 1, b = 1}
   env.GameTooltip = createMockTooltip(env, "GameTooltip")
 
-  env.hooksecurefunc = function(_, name, cb)
+  env.hooksecurefunc = function(target, name, cb)
+    local original = target[name]
+    target[name] = function(...) original(...) cb(...) end
     env.hooks[name] = cb
     env.hookCounts[name] = (env.hookCounts[name] or 0) + 1
   end
@@ -439,6 +441,27 @@ describe("regressions", function()
     assertEq(lines(env.GameTooltip), "AchievementID=5150 CriteriaID=222")
 
     assertEq(row._motion, true)
+  end)
+
+  test("forever legacy challenge cards show the achievement id, hooked once whether they copied the mixin before or after the hook", function()
+    local function copyMixin()
+      env.LegacyChallengeTemplateMixin = {OnEnter = env.AchievementTemplateMixin.OnEnter}
+    end
+    for _, copyBeforeHook in ipairs({true, false}) do
+      env.hookCounts = {}
+      env.AchievementTemplateMixin = {OnEnter = function() end}
+      if copyBeforeHook then copyMixin() end
+      loadAddon(env, "Blizzard_AchievementUI")
+      if not copyBeforeHook then copyMixin() end
+      loadAddon(env, "Blizzard_LegacySystem")
+
+      local card = env.CreateFrame("Button", "Card")
+      card.id = 6
+      env.GameTooltip:_reset()
+      env.LegacyChallengeTemplateMixin.OnEnter(card)
+      assertEq(lines(env.GameTooltip), "AchievementID=6")
+      assertEq(env.hookCounts.OnEnter, copyBeforeHook and 2 or 1)
+    end
   end)
 
   test("a disabled addon does not steal the achievement tooltip", function()

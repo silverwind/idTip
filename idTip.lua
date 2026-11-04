@@ -629,6 +629,13 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
         hookCriteria(_G["AchievementFrameCriteria" .. index], "criterias", index)
       end)
     end
+  elseif addon == "Blizzard_LegacySystem" then
+    -- Forever's achievement cards, unless they copied AchievementTemplateMixin after its hook
+    local legacyMixin = LegacyChallengeTemplateMixin
+    if legacyMixin and AchievementTemplateMixin and legacyMixin.OnEnter ~= AchievementTemplateMixin.OnEnter then
+      hook(legacyMixin, "OnEnter", achievementOnEnter)
+      hook(legacyMixin, "OnLeave", GameTooltip_Hide)
+    end
   elseif addon == "Blizzard_GarrisonUI" then
     -- ability id
     hook(_G, "AddAutoCombatSpellToTooltip", function (tooltip, info)

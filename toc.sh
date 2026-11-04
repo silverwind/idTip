@@ -2,8 +2,8 @@
 set -euo pipefail
 
 # every product, so the addon is not flagged out of date on any client. The Lua
-# only targets the current retail, classic and anniversary lines.
-PRODUCTS=(wow wowt wowxptr wow_beta wow_anniversary wow_classic wow_classic_beta wow_classic_ptr wow_classic_era wow_classic_era_ptr wow_classic_titan)
+# only targets the current retail, forever, classic and anniversary lines.
+PRODUCTS=(wow wowt wowxptr wow_beta wowf wow_anniversary wow_classic wow_classic_beta wow_classic_ptr wow_classic_era wow_classic_era_ptr wow_classic_titan)
 
 function toc {
   VERSIONS="$(curl -fsS "https://us.version.battle.net/v2/products/$1/versions" | awk -F "|" '/^[a-z]{2}\|/{print $6}')"
