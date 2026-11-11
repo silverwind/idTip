@@ -178,7 +178,12 @@ local function loadInto(reduce)
   env.UnitTokenFromGUID = function() return "mouseover" end
   env.UnitBattlePetSpeciesID = function() return mockState.wildSpecies or 0 end
 
-  env.C_MountJournal = {GetMountInfoByID = function() return "Mount", mockState.mountSpell end}
+  env.C_MountJournal = {
+    GetMountInfoByID = function() return "Mount", mockState.mountSpell end,
+    GetMountFromItem = function(itemId) return type(itemId) == "number" and mockState.itemMount or nil end,
+    GetMountFromSpell = function() return mockState.spellMount end,
+  }
+  env.C_TransmogCollection = {GetItemInfo = function() return unpack(mockState.transmog or {}) end}
 
   env.Enum = {BattlePetOwner = {Ally = 1}}
   env.PetBattlePrimaryAbilityTooltip = {
@@ -329,6 +334,10 @@ describe("items", function()
     {"a short item link does not error", "|Hitem:6948|h[Hearthstone]|h", 'ItemID="6948"'},
     {"an item that teaches a battle pet adds its SpeciesID", plainLink, 'ItemID="12345" SpeciesID=42',
       state = {petItemSpecies = 42}},
+    {"a mount item adds its MountID and summon spell", plainLink, 'ItemID="12345" MountID=5 SpellID=888',
+      state = {itemMount = 5, mountSpell = 888, spellMount = 5}},
+    {"gear adds its transmog appearance and source", plainLink, 'ItemID="12345" VisualID=77 SourceID=88',
+      state = {transmog = {77, 88}}},
     {"the recipe spell joins the crafted item's use effect", function()
       show(plainLink)
       hooks.SetRecipeResultItem(env.GameTooltip, 222)
@@ -352,7 +361,9 @@ describe("tooltip data", function()
     {"type 23 adds QuestID", {type = 23, id = 55001}, "QuestID=55001"},
     {"type 5 adds CurrencyID", {type = 5, id = 1234}, "CurrencyID=1234"},
     {"type 10 adds MountID and the mount's SpellID with its IconID", {type = 10, id = 777},
-      "MountID=777 SpellID=888 IconID=999", state = {mountSpell = 888, spellTexture = 999}},
+      "MountID=777 SpellID=888 IconID=999", state = {mountSpell = 888, spellTexture = 999, spellMount = 777}},
+    {"a mount's summon spell adds its MountID", {type = 1, id = 888}, "SpellID=888 MountID=777",
+      state = {mountSpell = 888, spellMount = 777}},
     {"type 12 adds AchievementID", {type = 12, id = 9999}, "AchievementID=9999"},
     {"type 4 adds ObjectID", {type = 4, id = 300}, "ObjectID=300"},
     {"a macro adds only MacroID", {type = 25, id = 7}, "MacroID=7"},

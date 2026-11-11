@@ -8,6 +8,9 @@ local GetItemGem = C_Item and C_Item.GetItemGem
 local GetItemSpell = C_Item and C_Item.GetItemSpell
 local GetItemLinkByGUID = C_Item and C_Item.GetItemLinkByGUID -- retail only
 local GetMountInfoByID = C_MountJournal and C_MountJournal.GetMountInfoByID
+local GetMountFromItem = C_MountJournal and C_MountJournal.GetMountFromItem
+local GetMountFromSpell = C_MountJournal and C_MountJournal.GetMountFromSpell
+local GetTransmogItemInfo = C_TransmogCollection and C_TransmogCollection.GetItemInfo -- retail only
 local GetPetInfoByItemID = C_PetJournal and C_PetJournal.GetPetInfoByItemID
 
 local white = WHITE_FONT_COLOR or {r = 1, g = 1, b = 1}
@@ -299,8 +302,8 @@ local function addLine(tooltip, id, kind)
   return true
 end
 
--- id can be a table of ids, like a transmog's several sources. Returns whether the tooltip changed.
-local function collect(tooltip, id, kind)
+-- returns whether the tooltip changed. id may be a list, source is the kind it derives from, ending mount and spell cycles.
+local function collect(tooltip, id, kind, source)
   if type(id) == "table" and #id == 1 then id = id[1] end
   local changed = addLine(tooltip, id, kind)
   if not isStringOrNumber(id) then return changed end
@@ -308,6 +311,9 @@ local function collect(tooltip, id, kind)
   if kind == "spell" then
     local iconId = GetSpellTexture and GetSpellTexture(id)
     if iconId then changed = collect(tooltip, iconId, "icon") or changed end
+
+    local mountId = source ~= "mount" and GetMountFromSpell and GetMountFromSpell(id)
+    if mountId then changed = collect(tooltip, mountId, "mount", kind) or changed end
   elseif kind == "item" then
     local iconId = GetItemIconByID and GetItemIconByID(id)
     if iconId then changed = collect(tooltip, iconId, "icon") or changed end
@@ -317,9 +323,12 @@ local function collect(tooltip, id, kind)
 
     local speciesId = GetPetInfoByItemID and select(13, GetPetInfoByItemID(id))
     if speciesId then changed = collect(tooltip, speciesId, "species") or changed end
+
+    local mountId = GetMountFromItem and tonumber(id) and GetMountFromItem(tonumber(id))
+    if mountId then changed = collect(tooltip, mountId, "mount", kind) or changed end
   elseif kind == "mount" then
-    local spellId = GetMountInfoByID and select(2, GetMountInfoByID(id))
-    if spellId then changed = collect(tooltip, spellId, "spell") or changed end
+    local spellId = source ~= "spell" and GetMountInfoByID and select(2, GetMountInfoByID(id))
+    if spellId then changed = collect(tooltip, spellId, "spell", kind) or changed end
   end
   return changed
 end
@@ -359,6 +368,12 @@ local function addItemInfo(tooltip, link)
   local itemId = string.match(link, "item:(%d*)")
   if not itemId or itemId == "" or itemId == "0" then return end
   local changed = collect(tooltip, itemId, "item")
+
+  if GetTransmogItemInfo then
+    local appearanceId, sourceId = GetTransmogItemInfo(link)
+    changed = collect(tooltip, appearanceId, "visual") or changed
+    changed = collect(tooltip, sourceId, "source") or changed
+  end
 
   local enchantId = tonumber(itemSplit[2])
   if enchantId and enchantId ~= 0 then changed = collect(tooltip, itemSplit[2], "enchant") or changed end
