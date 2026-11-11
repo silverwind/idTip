@@ -7,6 +7,7 @@ local GetItemInfo = C_Item and C_Item.GetItemInfo
 local GetItemGem = C_Item and C_Item.GetItemGem
 local GetItemSpell = C_Item and C_Item.GetItemSpell
 local GetItemLinkByGUID = C_Item and C_Item.GetItemLinkByGUID -- retail only
+local GetMountInfoByID = C_MountJournal and C_MountJournal.GetMountInfoByID
 
 local white = WHITE_FONT_COLOR or {r = 1, g = 1, b = 1}
 
@@ -315,6 +316,9 @@ local function collect(tooltip, id, kind)
     if iconId then changed = collect(tooltip, iconId, "icon") or changed end
 
     local spellId = GetItemSpell and select(2, GetItemSpell(id))
+    if spellId then changed = collect(tooltip, spellId, "spell") or changed end
+  elseif kind == "mount" then
+    local spellId = GetMountInfoByID and select(2, GetMountInfoByID(id))
     if spellId then changed = collect(tooltip, spellId, "spell") or changed end
   end
   return changed
