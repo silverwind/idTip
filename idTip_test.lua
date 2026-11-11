@@ -171,7 +171,12 @@ local function loadInto(reduce)
   env.C_PetJournal = {
     GetPetInfoByPetID = function() return mockState.petSpeciesId end,
     GetPetInfoBySpeciesID = function() return nil, nil, nil, mockState.petNpcId end,
+    GetPetInfoByItemID = function()
+      return nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, mockState.petItemSpecies
+    end,
   }
+  env.UnitTokenFromGUID = function() return "mouseover" end
+  env.UnitBattlePetSpeciesID = function() return mockState.wildSpecies or 0 end
 
   env.C_MountJournal = {GetMountInfoByID = function() return "Mount", mockState.mountSpell end}
 
@@ -322,6 +327,8 @@ describe("items", function()
     {"multiple bonuses share one singular label", "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:3:100:200:300|h[Item]|h",
       'ItemID="12345" BonusID="100,200,300"', config = {bonusEnabled = true}},
     {"a short item link does not error", "|Hitem:6948|h[Hearthstone]|h", 'ItemID="6948"'},
+    {"an item that teaches a battle pet adds its SpeciesID", plainLink, 'ItemID="12345" SpeciesID=42',
+      state = {petItemSpecies = 42}},
     {"the recipe spell joins the crafted item's use effect", function()
       show(plainLink)
       hooks.SetRecipeResultItem(env.GameTooltip, 222)
@@ -349,8 +356,9 @@ describe("tooltip data", function()
     {"type 12 adds AchievementID", {type = 12, id = 9999}, "AchievementID=9999"},
     {"type 4 adds ObjectID", {type = 4, id = 300}, "ObjectID=300"},
     {"a macro adds only MacroID", {type = 25, id = 7}, "MacroID=7"},
-    {"resolves NpcID from a creature guid", {type = 2, id = 0, guid = "Creature-0-1234-0-5678-69-0000123ABC"},
-      "NpcID=69"},
+    {"resolves NpcID from a creature guid, plus a wild battle pet's SpeciesID",
+      {type = 2, id = 0, guid = "Creature-0-1234-0-5678-69-0000123ABC"}, "NpcID=69 SpeciesID=42",
+      state = {wildSpecies = 42}},
     {"resolves NpcID from a vehicle guid", {type = 2, id = 0, guid = "Vehicle-0-1234-0-5678-12345-0000ABCDEF"},
       "NpcID=12345"},
     {"resolves NpcID from a player guid, falling back to data.id", {type = 2, id = 0, guid = "Player-1234-0000ABCD"},

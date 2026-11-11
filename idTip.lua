@@ -8,6 +8,7 @@ local GetItemGem = C_Item and C_Item.GetItemGem
 local GetItemSpell = C_Item and C_Item.GetItemSpell
 local GetItemLinkByGUID = C_Item and C_Item.GetItemLinkByGUID -- retail only
 local GetMountInfoByID = C_MountJournal and C_MountJournal.GetMountInfoByID
+local GetPetInfoByItemID = C_PetJournal and C_PetJournal.GetPetInfoByItemID
 
 local white = WHITE_FONT_COLOR or {r = 1, g = 1, b = 1}
 
@@ -313,6 +314,9 @@ local function collect(tooltip, id, kind)
 
     local spellId = GetItemSpell and select(2, GetItemSpell(id))
     if spellId then changed = collect(tooltip, spellId, "spell") or changed end
+
+    local speciesId = GetPetInfoByItemID and select(13, GetPetInfoByItemID(id))
+    if speciesId then changed = collect(tooltip, speciesId, "species") or changed end
   elseif kind == "mount" then
     local spellId = GetMountInfoByID and select(2, GetMountInfoByID(id))
     if spellId then changed = collect(tooltip, spellId, "spell") or changed end
@@ -328,6 +332,12 @@ end
 -- only the creature form carries an npc id, a Player or BattlePet guid holds something else
 local function npcIdFromGUID(guid)
   return tonumber(guid:match("^%a+%-%d+%-%d+%-%d+%-%d+%-(%d+)%-%x+$"))
+end
+
+local function wildPetSpecies(guid)
+  local unit = guid and UnitTokenFromGUID and UnitBattlePetSpeciesID and UnitTokenFromGUID(guid)
+  local speciesId = unit and UnitBattlePetSpeciesID(unit)
+  if speciesId and not isSecret(speciesId) and speciesId > 0 then return speciesId end
 end
 
 -- during a battle the unit is the pet, whose npc id belongs on no tooltip
@@ -401,6 +411,7 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
     -- collect, not add, since InternalProcessInfo shows the tooltip right after its post calls
     if kind == "unit" then
       addNpc(tooltip, data.guid, data.id)
+      collect(tooltip, wildPetSpecies(data.guid), "species")
     elseif kind == "item" then
       -- the link carries ids data.id lacks, and the guid resolves the actual
       -- item instance, so it wins, as in TooltipUtil.GetDisplayedItem
