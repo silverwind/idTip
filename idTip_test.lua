@@ -297,10 +297,10 @@ end)
 describe("items", function()
   cases({
     {"adds ItemID for simple item (no GUID)", {type = 0, id = 67890}, "ItemID=67890"},
-    {"parses full item link via GetItemLinkByGUID", vestLink, 'ItemID="158075" EnchantID="5932" BonusIDs="3524,1472"',
+    {"parses full item link via GetItemLinkByGUID", vestLink, 'ItemID="158075" EnchantID="5932" BonusID="3524,1472"',
       config = {bonusEnabled = true}},
     {"a negative suffix id does not shift the link fields", {type = 0, id = 158075},
-      'ItemID="158075" EnchantID="5932" BonusIDs="3524,1472"', config = {bonusEnabled = true},
+      'ItemID="158075" EnchantID="5932" BonusID="3524,1472"', config = {bonusEnabled = true},
       state = {itemLink = "|Hitem:158075:5932:0:0:0:0:-25:0:120:0:0:0:2:3524:1472|h[Vest]|h"}},
     {"a link claiming more bonus ids than it carries is bounded", {type = 0, id = 12345},
       'ItemID="12345" BonusID="100"', config = {bonusEnabled = true},
@@ -315,17 +315,17 @@ describe("items", function()
     {"parses expansion and set, querying GetItemInfo once per item, not once per field", plainLink,
       'ItemID="12345" ExpansionID=9 SetID=42', state = {itemInfo = {[15] = 9, [16] = 42}}},
     {"skips expansion 254 (classic)", plainLink, 'ItemID="12345"', state = {itemInfo = {[15] = 254}}},
-    {"parses item with gems", plainLink, 'ItemID="12345" GemIDs="154128,154129"',
+    {"parses item with gems", plainLink, 'ItemID="12345" GemID="154128,154129"',
       state = {itemGems = {"|Hitem:154128:0:0:0|h[Gem]|h", "|Hitem:154129:0:0:0|h[Gem2]|h"}}},
-    {"a single bonus uses the singular label", "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:1:9999|h[Item]|h",
+    {"a single bonus id is unwrapped from its list", "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:1:9999|h[Item]|h",
       'ItemID="12345" BonusID="9999"', config = {bonusEnabled = true}},
-    {"multiple bonuses use the plural label", "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:3:100:200:300|h[Item]|h",
-      'ItemID="12345" BonusIDs="100,200,300"', config = {bonusEnabled = true}},
+    {"multiple bonuses share one singular label", "|Hitem:12345:0:0:0:0:0:0:0:0:0:0:0:3:100:200:300|h[Item]|h",
+      'ItemID="12345" BonusID="100,200,300"', config = {bonusEnabled = true}},
     {"a short item link does not error", "|Hitem:6948|h[Hearthstone]|h", 'ItemID="6948"'},
     {"the recipe spell joins the crafted item's use effect", function()
       show(plainLink)
       hooks.SetRecipeResultItem(env.GameTooltip, 222)
-    end, 'ItemID="12345" SpellIDs="111,222"', state = {itemSpell = {"Use", 111}}},
+    end, 'ItemID="12345" SpellID="111,222"', state = {itemSpell = {"Use", 111}}},
   })
 end)
 
@@ -396,7 +396,7 @@ describe("compact", function()
         env.GameTooltip:AddDoubleLine("y", "z")
         env.GameTooltip:Show()
         env.GameTooltip:Show()
-      end, "SpellID: 999 " .. string.rep("x", 60) .. "=nil ItemID |cffffffff12345|r SpellIDs |cffffffff111,222|r"
+      end, "SpellID: 999 " .. string.rep("x", 60) .. "=nil ItemID |cffffffff12345|r SpellID |cffffffff111,222|r"
       .. ' IconID |cffffffff999|r\nExpansionID |cffffffff9|r=nil y="z"=false=7',
       config = {compact = true},
       state = {itemSpell = {"Use", 111}, spellTexture = 999, itemInfo = {[15] = 9}, wrapWidth = 29, rightEdge = 40}},
@@ -429,7 +429,7 @@ describe("ids tooltip data does not carry", function()
         {visualID = 1, sourceID = 7, itemID = 9},
         {visualID = 1, sourceID = 8, itemID = 9},
       }})
-    end, 'VisualID=1 SourceIDs="7,8" ItemID=9'},
+    end, 'VisualID=1 SourceID="7,8" ItemID=9'},
   })
 end)
 

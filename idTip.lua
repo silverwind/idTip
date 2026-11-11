@@ -132,12 +132,10 @@ local function cellText(name, side, index)
 end
 
 -- Joins later ids onto the line this kind already has. The left cell must match
--- exactly, so no plural or foreign label counts as ours. Returns whether one existed and changed.
+-- exactly, so no foreign label counts as ours. Returns whether one existed and changed.
 local function extendLine(tooltip, name, label, id)
-  local plural = label .. "s"
   for index = tooltip:NumLines(), 1, -1 do
-    local text, left = cellText(name, "Left", index)
-    if text == label or text == plural then
+    if cellText(name, "Left", index) == label then
       local joined, right = cellText(name, "Right", index)
       if not right then return true, false end
 
@@ -151,7 +149,6 @@ local function extendLine(tooltip, name, label, id)
         addUnique(values, tostring(id)) -- wrapping a scalar would allocate per merge
       end
       if #values == count then return true, false end
-      left:SetText(#values > 1 and plural or label)
       right:SetText(table.concat(values, ","))
       return true, true
     end
@@ -160,7 +157,7 @@ local function extendLine(tooltip, name, label, id)
 end
 
 local compactLabels = {}
-for _, label in pairs(kinds) do compactLabels[label], compactLabels[label .. "s"] = true, true end
+for _, label in pairs(kinds) do compactLabels[label] = true end
 
 local function parseCompact(text)
   if not text then return end
@@ -170,7 +167,7 @@ local function parseCompact(text)
     if not compactLabels[label] then return end
     local values = {}
     for value in string.gmatch(joined, "[^,]+") do values[#values + 1] = value end
-    entries[#entries + 1] = {label = string.match(label, "^(.-)s?$"), values = values}
+    entries[#entries + 1] = {label = label, values = values}
     position = finish + 1
   end
   return entries[1] and entries
@@ -185,7 +182,7 @@ local function findCompact(tooltip, name)
 end
 
 local function compactToken(entry)
-  return entry.label .. (#entry.values > 1 and "s" or "") .. " |cffffffff" .. table.concat(entry.values, ",") .. "|r"
+  return entry.label .. " |cffffffff" .. table.concat(entry.values, ",") .. "|r"
 end
 
 -- laid out extents, so column gaps, indents and wrapped cells count as drawn, right cells sitting flush
@@ -290,15 +287,14 @@ local function addLine(tooltip, id, kind)
   local ok, name = pcall(getTooltipName, tooltip)
   if not ok or not name then return false end
 
-  local multiple = type(id) == "table"
   local label = kinds[kind]
 
   -- the rendered lines are the only per-tooltip state that cannot go stale
   if idTipConfig and idTipConfig.compact then return addCompact(tooltip, name, label, id) end
   local found, changed = extendLine(tooltip, name, label, id)
   if found then return changed end
-  local right = multiple and table.concat(id, ",") or id
-  tooltip:AddDoubleLine(label .. (multiple and "s" or ""), right, nil, nil, nil, white.r, white.g, white.b)
+  local right = type(id) == "table" and table.concat(id, ",") or id
+  tooltip:AddDoubleLine(label, right, nil, nil, nil, white.r, white.g, white.b)
   return true
 end
 
