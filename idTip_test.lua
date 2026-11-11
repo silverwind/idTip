@@ -13,6 +13,10 @@ end
 
 local mockState = {}
 
+local function mockWidth(text)
+  return #tostring(text):gsub("|c%x%x%x%x%x%x%x%x", ""):gsub("|r", "")
+end
+
 local function createMockTooltip(env, tooltipName)
   local rows = {}
   local t = {_rows = rows, _scripts = {}, _hooks = {}}
@@ -26,10 +30,21 @@ local function createMockTooltip(env, tooltipName)
       env[tooltipName .. "Text" .. side .. index] = {
         GetText = function() return tostring(rows[index][key]) end,
         SetText = function(_, text) rows[index][key] = text end,
+        IsShown = function() return rows[index][key] ~= nil end,
+        GetStringWidth = function() return mockWidth(rows[index][key]) end,
+        GetLeft = function() return 0 end,
+        GetRight = function()
+          return key == "right" and mockState.rightEdge or rows[index].wrap and mockState.wrapWidth
+            or mockWidth(rows[index][key])
+        end,
       }
     end
   end
-  function t:Show() self._shown = true end
+  function t:AddLine(text, _r, _g, _b, wrap)
+    self:AddDoubleLine(text)
+    rows[#rows].wrap = wrap
+  end
+  function t:Show() self._shown, self._shows = true, (self._shows or 0) + 1 end
   function t:IsVisible() return false end
   function t:IsShown() return self._shown == true end
   function t:SetOwner(owner) self._owner = owner end
@@ -57,7 +72,7 @@ local function createMockTooltip(env, tooltipName)
   end
 
   function t:_reset()
-    self._shown, self._owner = nil, nil
+    self._shown, self._shows, self._owner = nil, nil, nil
     for i = #rows, 1, -1 do
       env[tooltipName .. "TextLeft" .. i] = nil
       env[tooltipName .. "TextRight" .. i] = nil
@@ -239,6 +254,7 @@ local function show(data)
     data = {type = 0, id = id, guid = "Item-0-0-0-0-" .. id}
   end
   tooltipCallback(env.GameTooltip, data)
+  env.GameTooltip:Show()
 end
 
 local function cases(list, observe)
@@ -254,8 +270,8 @@ local function cases(list, observe)
 end
 
 describe("config initialization", function()
-  test("ADDON_LOADED creates an enabled version 2 config, core kinds on, bonus and trait kinds off", function()
-    for key, value in pairs({enabled = true, version = 2, spellEnabled = true, itemEnabled = true, unitEnabled = true,
+  test("ADDON_LOADED creates an enabled version 2 config, core kinds on, bonus and trait kinds and compact off", function()
+    for key, value in pairs({enabled = true, compact = false, version = 2, spellEnabled = true, itemEnabled = true, unitEnabled = true,
       questEnabled = true, achievementEnabled = true, currencyEnabled = true, mountEnabled = true,
       bonusEnabled = false, traitnodeEnabled = false, traitentryEnabled = false, traitdefEnabled = false}) do
       assertEq(key .. "=" .. repr(env.idTipConfig[key]), key .. "=" .. repr(value))
@@ -313,6 +329,15 @@ end)
 
 describe("tooltip data", function()
   local spell, quest = {type = 1, id = 12345}, {type = 23, id = 100}
+  test("the post call leaves the Show to InternalProcessInfo, a setter hook shows once and only when it added", function()
+    mockState.spellTexture = 999
+    tooltipCallback(env.GameTooltip, spell)
+    assertEq(env.GameTooltip._shows, nil)
+    hooks.SetRecipeResultItem(env.GameTooltip, 222)
+    hooks.SetRecipeResultItem(env.GameTooltip, 222)
+    assertEq(env.GameTooltip._shows, 1)
+  end)
+
   cases({
     {"adds SpellID and the derived IconID", spell, "SpellID=12345 IconID=999999", state = {spellTexture = 999999}},
     {"type 23 adds QuestID", {type = 23, id = 55001}, "QuestID=55001"},
@@ -355,6 +380,26 @@ describe("tooltip data", function()
       show(spell)
     end, 'SpellID: 999="" SpellID=12345'},
   })
+end)
+
+describe("compact", function()
+  cases({
+    {"merges ids into one unwrapped line broken between ids within the laid out width, repacked when a later "
+      .. "double line's column gap widens it",
+      function()
+        env.GameTooltip:AddLine("SpellID: 999 " .. string.rep("x", 60), nil, nil, nil, true)
+        show(plainLink)
+        hooks.SetRecipeResultItem(env.GameTooltip, 222)
+        env.GameTooltip:AddDoubleLine("y", "z")
+        env.GameTooltip:Show()
+        env.GameTooltip:Show()
+      end, "SpellID: 999 " .. string.rep("x", 60) .. "=nil ItemID |cffffffff12345|r SpellIDs |cffffffff111,222|r"
+      .. ' IconID |cffffffff999|r\nExpansionID |cffffffff9|r=nil y="z"=false=7',
+      config = {compact = true},
+      state = {itemSpell = {"Use", 111}, spellTexture = 999, itemInfo = {[15] = 9}, wrapWidth = 29, rightEdge = 40}},
+  }, function(tooltip)
+    return lines(tooltip) .. "=" .. tostring(tooltip._rows[2].wrap == true) .. "=" .. tooltip._shows
+  end)
 end)
 
 describe("ids tooltip data does not carry", function()
@@ -509,6 +554,7 @@ describe("options", function()
     end
 
     assertEq(byKey.enabled.default, true)
+    assertEq(byKey.compact.default, false)
     for key, value in pairs(env.idTipConfig) do
       if key ~= "enabled" and string.match(key, "Enabled$") then
         kinds = kinds + 1
@@ -516,7 +562,7 @@ describe("options", function()
       end
     end
     assertTrue(kinds > 20)
-    assertEq(#env.settings, kinds + 1)
+    assertEq(#env.settings, kinds + 2)
     assertEq(table.concat(env.headers, ","), "Items,Spells,World,Collections")
   end)
 

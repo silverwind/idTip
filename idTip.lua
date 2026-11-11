@@ -131,14 +131,14 @@ local function cellText(name, side, index)
 end
 
 -- Joins later ids onto the line this kind already has. The left cell must match
--- exactly, so no plural or foreign label counts as ours. Returns whether one existed.
+-- exactly, so no plural or foreign label counts as ours. Returns whether one existed and changed.
 local function extendLine(tooltip, name, label, id)
   local plural = label .. "s"
   for index = tooltip:NumLines(), 1, -1 do
     local text, left = cellText(name, "Left", index)
     if text == label or text == plural then
       local joined, right = cellText(name, "Right", index)
-      if not right then return true end
+      if not right then return true, false end
 
       local values = {} -- a foreign left-only line leaves its right cell unwritten
       for value in string.gmatch(joined or "", "[^,]+") do values[#values + 1] = value end
@@ -149,15 +149,127 @@ local function extendLine(tooltip, name, label, id)
       else
         addUnique(values, tostring(id)) -- wrapping a scalar would allocate per merge
       end
-      if #values > count then
-        left:SetText(#values > 1 and plural or label)
-        right:SetText(table.concat(values, ","))
-        tooltip:Show()
-      end
-      return true
+      if #values == count then return true, false end
+      left:SetText(#values > 1 and plural or label)
+      right:SetText(table.concat(values, ","))
+      return true, true
     end
   end
-  return false
+  return false, false
+end
+
+local compactLabels = {}
+for _, label in pairs(kinds) do compactLabels[label], compactLabels[label .. "s"] = true, true end
+
+local function parseCompact(text)
+  if not text then return end
+  local entries, position = {}, 1
+  while position <= #text do
+    local _, finish, label, joined = string.find(text, "^%s*(%a+) |cffffffff([^|]+)|r", position)
+    if not compactLabels[label] then return end
+    local values = {}
+    for value in string.gmatch(joined, "[^,]+") do values[#values + 1] = value end
+    entries[#entries + 1] = {label = string.match(label, "^(.-)s?$"), values = values}
+    position = finish + 1
+  end
+  return entries[1] and entries
+end
+
+local function findCompact(tooltip, name)
+  for index = tooltip:NumLines(), 1, -1 do
+    local text, line = cellText(name, "Left", index)
+    local entries = parseCompact(text)
+    if entries then return entries, line, index end
+  end
+end
+
+local function compactToken(entry)
+  return entry.label .. (#entry.values > 1 and "s" or "") .. " |cffffffff" .. table.concat(entry.values, ",") .. "|r"
+end
+
+-- laid out extents, so column gaps, indents and wrapped cells count as drawn, right cells sitting flush
+local sides = {"Left", "Right"}
+local function contentWidth(tooltip, name, line, skip)
+  local left = line:GetLeft()
+  if not left or isSecret(left) then return 0 end -- an unplaced tooltip, like a scanning one
+  local right = left
+  for index = 1, tooltip:NumLines() do
+    for _, side in ipairs(sides) do
+      local cell = index ~= skip and _G[name .. "Text" .. side .. index]
+      local edge = cell and cell:IsShown() and cell:GetRight()
+      if edge and not isSecret(edge) then right = math.max(right, edge) end
+    end
+  end
+  return right - left
+end
+
+local function fits(line, text, limit)
+  line:SetText(text)
+  return line:GetStringWidth() <= limit
+end
+
+-- runs after every Show, so later lines widen the rows too, and breaks only between ids
+local packing
+local function packCompact(tooltip)
+  if packing then return end
+  local ok, name = pcall(getTooltipName, tooltip)
+  if not ok or not name then return end
+  local entries, line, lineIndex = findCompact(tooltip, name)
+  if not entries then return end
+
+  local current = line:GetText()
+  local limit = contentWidth(tooltip, name, line, lineIndex)
+  local rows, row = {}, nil
+  for _, entry in ipairs(entries) do
+    local token = compactToken(entry)
+    local joined = row and row .. " " .. token
+    if joined and fits(line, joined, limit) then
+      row = joined
+    else
+      rows[#rows + 1] = row
+      row = token
+    end
+  end
+  rows[#rows + 1] = row
+  local packed = table.concat(rows, "\n")
+  line:SetText(packed)
+  if packed == current then return end -- the usual case once later lines stop widening it
+  packing = true
+  tooltip:Show()
+  packing = false
+end
+
+local showHooked = setmetatable({}, {__mode = "k"})
+local function addCompact(tooltip, name, label, id)
+  local entries, line = findCompact(tooltip, name)
+  entries = entries or {}
+
+  local entry
+  for _, existing in ipairs(entries) do
+    if existing.label == label then entry = existing end
+  end
+  if not entry then
+    entry = {label = label, values = {}}
+    entries[#entries + 1] = entry
+  end
+
+  local count = #entry.values
+  for _, value in ipairs(type(id) == "table" and id or {id}) do addUnique(entry.values, tostring(value)) end
+  if #entry.values == count then return false end
+
+  if not showHooked[tooltip] then
+    showHooked[tooltip] = true
+    hooksecurefunc(tooltip, "Show", packCompact)
+  end
+  local tokens = {}
+  for index, existing in ipairs(entries) do tokens[index] = compactToken(existing) end
+  local narrowest = table.concat(tokens, "\n") -- so only other lines size the layout packCompact measures
+  if line then
+    line:SetText(narrowest)
+  else
+    tooltip:AddLine(narrowest) -- unwrapped, so the client never splits an id
+  end
+  return true
 end
 
 local function isEnabled(kind)
@@ -169,41 +281,48 @@ local function shouldAdd(id, kind)
   return not isSecret(id) and isValidId(id) and isEnabled(kind)
 end
 
+-- returns whether the tooltip changed, leaving the Show, a full relayout, to the caller
 local function addLine(tooltip, id, kind)
-  if not shouldAdd(id, kind) then return end
+  if not shouldAdd(id, kind) then return false end
 
   -- abort when the tooltip has no name, or when :GetName throws
   local ok, name = pcall(getTooltipName, tooltip)
-  if not ok or not name then return end
+  if not ok or not name then return false end
 
   local multiple = type(id) == "table"
   local label = kinds[kind]
 
   -- the rendered lines are the only per-tooltip state that cannot go stale
-  if extendLine(tooltip, name, label, id) then return end
-
-  local left = label .. (multiple and "s" or "")
+  if idTipConfig and idTipConfig.compact then return addCompact(tooltip, name, label, id) end
+  local found, changed = extendLine(tooltip, name, label, id)
+  if found then return changed end
   local right = multiple and table.concat(id, ",") or id
-  tooltip:AddDoubleLine(left, right, nil, nil, nil, white.r, white.g, white.b)
-  tooltip:Show()
+  tooltip:AddDoubleLine(label .. (multiple and "s" or ""), right, nil, nil, nil, white.r, white.g, white.b)
+  return true
 end
 
--- id can be a table of ids, like a transmog's several sources
-local function add(tooltip, id, kind)
+-- id can be a table of ids, like a transmog's several sources. Returns whether the tooltip changed.
+local function collect(tooltip, id, kind)
   if type(id) == "table" and #id == 1 then id = id[1] end
-  addLine(tooltip, id, kind)
-  if not isStringOrNumber(id) then return end
+  local changed = addLine(tooltip, id, kind)
+  if not isStringOrNumber(id) then return changed end
 
   if kind == "spell" then
     local iconId = GetSpellTexture and GetSpellTexture(id)
-    if iconId then add(tooltip, iconId, "icon") end
+    if iconId then changed = collect(tooltip, iconId, "icon") or changed end
   elseif kind == "item" then
     local iconId = GetItemIconByID and GetItemIconByID(id)
-    if iconId then add(tooltip, iconId, "icon") end
+    if iconId then changed = collect(tooltip, iconId, "icon") or changed end
 
     local spellId = GetItemSpell and select(2, GetItemSpell(id))
-    if spellId then add(tooltip, spellId, "spell") end
+    if spellId then changed = collect(tooltip, spellId, "spell") or changed end
   end
+  return changed
+end
+
+-- for hooks that run after Blizzard's own Show
+local function add(tooltip, id, kind)
+  if collect(tooltip, id, kind) then tooltip:Show() end
 end
 
 -- only the creature form carries an npc id, a Player or BattlePet guid holds something else
@@ -213,13 +332,13 @@ end
 
 -- during a battle the unit is the pet, whose npc id belongs on no tooltip
 local function addNpc(tooltip, guid, fallbackId)
-  if inPetBattle() then return end
-  add(tooltip, npcIdFromGUID(guid or "") or fallbackId, "unit")
+  return not inPetBattle() and collect(tooltip, npcIdFromGUID(guid or "") or fallbackId, "unit")
 end
 
+-- nil without an item link, else whether the tooltip changed
 local function addItemInfo(tooltip, link)
   local itemString = link and string.match(link, "item:([%-?%d:]+)")
-  if not itemString then return false end
+  if not itemString then return end
 
   local itemSplit = {}
   -- never matches empty, so negative and blank fields keep position on Lua 5.1
@@ -228,11 +347,11 @@ local function addItemInfo(tooltip, link)
   end
 
   local itemId = string.match(link, "item:(%d*)")
-  if not itemId or itemId == "" or itemId == "0" then return false end
-  add(tooltip, itemId, "item")
+  if not itemId or itemId == "" or itemId == "0" then return end
+  local changed = collect(tooltip, itemId, "item")
 
   local enchantId = tonumber(itemSplit[2])
-  if enchantId and enchantId ~= 0 then add(tooltip, itemSplit[2], "enchant") end
+  if enchantId and enchantId ~= 0 then changed = collect(tooltip, itemSplit[2], "enchant") or changed end
 
   -- both kinds are checked here as well as in addLine, so a disabled one costs
   -- neither a table per tooltip nor four gem queries
@@ -242,7 +361,7 @@ local function addItemInfo(tooltip, link)
     for index = 1, math.min(tonumber(itemSplit[13]) or 0, #itemSplit - 13) do
       bonuses[#bonuses + 1] = itemSplit[13 + index]
     end
-    add(tooltip, bonuses, "bonus")
+    changed = collect(tooltip, bonuses, "bonus") or changed
   end
 
   if GetItemGem and isEnabled("gem") then
@@ -251,18 +370,18 @@ local function addItemInfo(tooltip, link)
       local gemLink = select(2, GetItemGem(link, socket))
       addUnique(gems, gemLink and string.match(gemLink, "item:(%d+):"))
     end
-    add(tooltip, gems, "gem")
+    changed = collect(tooltip, gems, "gem") or changed
   end
 
   if GetItemInfo then
     local expansionId, setId = select(15, GetItemInfo(itemId))
     if expansionId and expansionId ~= 254 then -- always 254 on classic, therefor uninteresting
-      add(tooltip, expansionId, "expansion")
+      changed = collect(tooltip, expansionId, "expansion") or changed
     end
-    if setId then add(tooltip, setId, "set") end
+    if setId then changed = collect(tooltip, setId, "set") or changed end
   end
 
-  return true
+  return changed
 end
 
 -- Tooltip data
@@ -279,6 +398,7 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
     local kind = kindsByID[tonumber(data.type)]
     if not kind then return end
 
+    -- collect, not add, since InternalProcessInfo shows the tooltip right after its post calls
     if kind == "unit" then
       addNpc(tooltip, data.guid, data.id)
     elseif kind == "item" then
@@ -286,9 +406,9 @@ if TooltipDataProcessor and TooltipDataProcessor.AddTooltipPostCall then
       -- item instance, so it wins, as in TooltipUtil.GetDisplayedItem
       local link = (data.guid and GetItemLinkByGUID and GetItemLinkByGUID(data.guid)) or data.hyperlink
       if not link and tooltip.GetItem then link = select(2, tooltip:GetItem()) end
-      if not addItemInfo(tooltip, link) then add(tooltip, data.id, kind) end
+      if addItemInfo(tooltip, link) == nil then collect(tooltip, data.id, kind) end
     else
-      add(tooltip, data.id, kind)
+      collect(tooltip, data.id, kind)
     end
   end)
 end
@@ -302,7 +422,7 @@ end
 if GameTooltip and not GameTooltip.ProcessInfo then
 
 hookScript(GameTooltip, "OnTooltipSetItem", function(tooltip)
-  addItemInfo(tooltip, select(2, tooltip:GetItem()))
+  if addItemInfo(tooltip, select(2, tooltip:GetItem())) then tooltip:Show() end
 end)
 
 hookScript(GameTooltip, "OnTooltipSetSpell", function(tooltip)
@@ -311,7 +431,7 @@ end)
 
 hookScript(GameTooltip, "OnTooltipSetUnit", function(tooltip)
   local unit = select(2, tooltip:GetUnit())
-  if unit and UnitGUID then addNpc(tooltip, UnitGUID(unit)) end
+  if unit and UnitGUID and addNpc(tooltip, UnitGUID(unit)) then tooltip:Show() end
 end)
 
 -- an aura is its own tooltip type, so no OnTooltipSet script covers it, and the
@@ -458,7 +578,7 @@ local function achievementOnEnter(button)
   if not isEnabled("achievement") then return end
   GameTooltip:SetOwner(button, "ANCHOR_NONE")
   GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-  add(GameTooltip, button.id, "achievement")
+  collect(GameTooltip, button.id, "achievement")
   GameTooltip:Show()
 end
 
@@ -489,8 +609,8 @@ local function criteriaOnEnter(frame)
   if not criteriaId then return end
   if not GameTooltip:IsVisible() then GameTooltip:SetOwner(button:GetParent(), "ANCHOR_NONE") end
   GameTooltip:SetPoint("TOPLEFT", button, "TOPRIGHT", 0, 0)
-  add(GameTooltip, button.id, "achievement")
-  add(GameTooltip, criteriaId, "criteria")
+  collect(GameTooltip, button.id, "achievement")
+  collect(GameTooltip, criteriaId, "criteria")
   GameTooltip:Show()
 end
 
@@ -547,10 +667,10 @@ end
 local function registerOptions()
   local category, layout = Settings.RegisterVerticalLayoutCategory(addonName)
 
-  local function addCheckbox(key, label, default)
+  local function addCheckbox(key, label, default, tooltip)
     local setting = Settings.RegisterAddOnSetting(category, addonName .. "_" .. key, key, idTipConfig,
       "boolean", label, default)
-    Settings.CreateCheckbox(category, setting)
+    Settings.CreateCheckbox(category, setting, tooltip)
   end
 
   local function addHeader(name)
@@ -560,6 +680,7 @@ local function registerOptions()
   end
 
   addCheckbox("enabled", "Enabled", true)
+  addCheckbox("compact", "Single Line", false, "Show all IDs on one line, wrapped to the tooltip's width")
 
   for _, section in ipairs(kindSections) do
     addHeader(section.name)
@@ -581,6 +702,7 @@ eventFrame:SetScript("OnEvent", function(_, _, addon)
     if not idTipConfig then idTipConfig = {} end
 
     if type(idTipConfig.enabled) ~= "boolean" then idTipConfig.enabled = true end
+    if type(idTipConfig.compact) ~= "boolean" then idTipConfig.compact = false end
     -- 1, not 2, so a config written before the field existed still migrates
     if type(idTipConfig.version) ~= "number" then idTipConfig.version = 1 end
 
