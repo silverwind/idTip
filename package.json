@@ -1,11 +1,11 @@
 {
   "type": "module",
-  "packageManager": "pnpm@12.16.1",
+  "packageManager": "pnpm@12.23.0",
   "devDependencies": {
     "@types/node": "26.6.6",
     "typescript": "7.0.2",
     "typescript-config-silverwind": "21.0.2",
-    "updates": "20.0.0",
+    "updates": "20.0.2",
     "updates-config-silverwind": "4.1.0",
     "versions": "15.5.2"
   }
